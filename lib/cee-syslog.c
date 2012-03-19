@@ -97,6 +97,15 @@ _find_prio (int prio)
   return "<unknown>";
 }
 
+static inline const pid_t
+_find_pid (void)
+{
+  if (cee_sys_settings.flags & LOG_CEE_NOCACHE)
+    return getpid ();
+  else
+    return cee_sys_settings.pid;
+}
+
 static struct json_object *
 _cee_json_vappend (struct json_object *json, va_list ap)
 {
@@ -129,8 +138,11 @@ _cee_json_append (struct json_object *json, ...)
 static inline void
 _cee_discover (struct json_object *jo, int priority)
 {
+  if (cee_sys_settings.flags & LOG_CEE_NODISCOVER)
+    return;
+
   _cee_json_append (jo,
-                    "pid", "%d", cee_sys_settings.pid,
+                    "pid", "%d", _find_pid (),
                     "facility", "%s", _find_facility (),
                     "priority", "%s", _find_prio (priority),
                     NULL);
