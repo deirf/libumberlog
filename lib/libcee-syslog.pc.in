@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: libcee-syslog
+Version: @VERSION@
+Description: CEE-enhanced syslog() API
+URL: https://github.com/algernon/libcee-syslog
+Libs: -L${libdir} -lcee-syslog -ldl

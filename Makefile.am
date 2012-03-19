@@ -1,0 +1,4 @@
+SUBDIRS		= lib
+
+ACLOCAL_AMFLAGS	= -I m4 --install
+EXTRA_DIST	= LICENSE
