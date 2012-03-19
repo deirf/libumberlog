@@ -26,26 +26,75 @@
  */
 
 #define _GNU_SOURCE 1
+#define SYSLOG_NAMES 1
 
-#include "cee-syslog.h"
-
-#include <syslog.h>
 #include <stdarg.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include <json.h>
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+
+#include "cee-syslog.h"
 
 static void (*old_syslog) ();
+static void (*old_openlog) ();
 
 static void cee_init (void) __attribute__((constructor));
+
+static __thread struct
+{
+  int flags;
+  int facility;
+  pid_t pid;
+} cee_sys_settings;
 
 static void
 cee_init (void)
 {
   old_syslog = dlsym (RTLD_NEXT, "syslog");
+  old_openlog = dlsym (RTLD_NEXT, "openlog");
+}
+
+void
+cee_openlog (const char *ident, int option, int facility)
+{
+  old_openlog (ident, option, facility);
+  cee_sys_settings.flags = option;
+  cee_sys_settings.facility = facility;
+  cee_sys_settings.pid = getpid ();
+}
+
+/** HELPERS **/
+static const char *
+_find_facility (void)
+{
+  int i = 0;
+
+  while (facilitynames[i].c_name != NULL &&
+         facilitynames[i].c_val != cee_sys_settings.facility)
+    i++;
+
+  if (facilitynames[i].c_val == cee_sys_settings.facility)
+    return facilitynames[i].c_name;
+  return "<unknown>";
+}
+
+static const char *
+_find_prio (int prio)
+{
+  int i = 0;
+
+  while (prioritynames[i].c_name != NULL &&
+         prioritynames[i].c_val != prio)
+    i++;
+
+  if (prioritynames[i].c_val == prio)
+    return prioritynames[i].c_name;
+  return "<unknown>";
 }
 
 static struct json_object *
@@ -77,44 +126,66 @@ _cee_json_append (struct json_object *json, ...)
   return json;
 }
 
-static const char *
-_cee_vformat (struct json_object **json, const char *msg_format, va_list ap)
+static inline void
+_cee_discover (struct json_object *jo, int priority)
 {
-  struct json_object *jo;
-  char *value;
+  _cee_json_append (jo,
+                    "pid", "%d", cee_sys_settings.pid,
+                    "facility", "%s", _find_facility (),
+                    "priority", "%s", _find_prio (priority),
+                    NULL);
+}
 
-  jo = json_object_new_object ();
+static struct json_object *
+_cee_vformat (struct json_object *jo, int format_version,
+              int priority, const char *msg_format,
+              va_list ap)
+{
+  char *value;
 
   vasprintf (&value, msg_format, ap);
   json_object_object_add (jo, "msg", json_object_new_string (value));
   free (value);
 
-  _cee_json_vappend (jo, ap);
+  if (format_version > 0)
+    _cee_json_vappend (jo, ap);
 
-  *json = jo;
-  return json_object_to_json_string (jo);
+  _cee_discover (jo, priority);
+
+  return jo;
 }
 
+static inline const char *
+_cee_vformat_str (struct json_object *jo, int format_version,
+                  int priority, const char *msg_format,
+                  va_list ap)
+{
+  return json_object_to_json_string (_cee_vformat (jo, format_version,
+                                                   priority, msg_format,
+                                                   ap));
+}
+
+/** Public API **/
 char *
-cee_format (const char *msg_format, ...)
+cee_format (int priority, const char *msg_format, ...)
 {
   char *result;
   va_list ap;
 
   va_start (ap, msg_format);
-  result = cee_vformat (msg_format, ap);
+  result = cee_vformat (priority, msg_format, ap);
   va_end (ap);
 
   return result;
 }
 
 char *
-cee_vformat (const char *msg_format, va_list ap)
+cee_vformat (int priority, const char *msg_format, va_list ap)
 {
-  struct json_object *jo;
+  struct json_object *jo = json_object_new_object ();
   char *result;
 
-  result = strdup (_cee_vformat (&jo, msg_format, ap));
+  result = strdup (_cee_vformat_str (jo, 1, priority, msg_format, ap));
   json_object_put (jo);
   return result;
 }
@@ -129,11 +200,44 @@ cee_syslog (int priority, const char *msg_format, ...)
   va_end (ap);
 }
 
+static inline void
+_cee_vsyslog (int format_version, int priority,
+              const char *msg_format, va_list ap)
+{
+  struct json_object *jo = json_object_new_object ();
+
+  _cee_vformat (jo, format_version, priority, msg_format, ap);
+  old_syslog (priority, "@cee:%s", json_object_to_json_string (jo));
+  json_object_put (jo);
+}
+
 void
 cee_vsyslog (int priority, const char *msg_format, va_list ap)
 {
-  struct json_object *jo;
-
-  old_syslog (priority, "@cee:%s", _cee_vformat (&jo, msg_format, ap));
-  json_object_put (jo);
+  _cee_vsyslog (1, priority, msg_format, ap);
 }
+
+void
+_cee_old_vsyslog (int priority, const char *msg_format, va_list ap)
+{
+  _cee_vsyslog (0, priority, msg_format, ap);
+}
+
+void
+_cee_old_syslog (int priority, const char *msg_format, ...)
+{
+  va_list ap;
+
+  va_start (ap, msg_format);
+  _cee_old_vsyslog (priority, msg_format, ap);
+  va_end (ap);
+}
+
+void openlog (const char *ident, int option, int facility)
+  __attribute__((alias ("cee_openlog")));
+
+void syslog (int priority, const char *msg_format, ...)
+  __attribute__((alias ("_cee_old_syslog")));
+
+void vsyslog (int priority, const char *msg_format, va_list ap)
+  __attribute__((alias ("_cee_old_vsyslog")));
