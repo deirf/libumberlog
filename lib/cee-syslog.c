@@ -36,6 +36,7 @@
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void (*old_syslog) ();
 
@@ -47,18 +48,8 @@ cee_init (void)
   old_syslog = dlsym (RTLD_NEXT, "syslog");
 }
 
-void
-cee_syslog (int priority, const char *msg_format, ...)
-{
-  va_list ap;
-
-  va_start (ap, msg_format);
-  vsyslog (priority, msg_format, ap);
-  va_end (ap);
-}
-
-void
-cee_vsyslog (int priority, const char *msg_format, va_list ap)
+static const char *
+_cee_vformat (struct json_object **json, const char *msg_format, va_list ap)
 {
   struct json_object *jo;
   char *key, *fmt;
@@ -80,7 +71,50 @@ cee_vsyslog (int priority, const char *msg_format, va_list ap)
       free (value);
     }
 
-  old_syslog (priority, "@cee:%s", json_object_to_json_string (jo));
+  *json = jo;
+  return json_object_to_json_string (jo);
+}
+
+char *
+cee_format (const char *msg_format, ...)
+{
+  char *result;
+  va_list ap;
+
+  va_start (ap, msg_format);
+  result = cee_vformat (msg_format, ap);
+  va_end (ap);
+
+  return result;
+}
+
+char *
+cee_vformat (const char *msg_format, va_list ap)
+{
+  struct json_object *jo;
+  char *result;
+
+  result = strdup (_cee_vformat (&jo, msg_format, ap));
+  json_object_put (jo);
+  return result;
+}
+
+void
+cee_syslog (int priority, const char *msg_format, ...)
+{
+  va_list ap;
+
+  va_start (ap, msg_format);
+  vsyslog (priority, msg_format, ap);
+  va_end (ap);
+}
+
+void
+cee_vsyslog (int priority, const char *msg_format, va_list ap)
+{
+  struct json_object *jo;
+
+  old_syslog (priority, "@cee:%s", _cee_vformat (&jo, msg_format, ap));
   json_object_put (jo);
 }
 

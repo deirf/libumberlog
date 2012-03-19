@@ -31,6 +31,9 @@
 #include <syslog.h>
 #include <stdarg.h>
 
+char *cee_format (const char *msg_format, ...);
+char *cee_vformat (const char *msg_format, va_list ap);
+
 void cee_syslog (int priority, const char *msg_format, ...);
 void cee_vsyslog (int priority, const char *msg_format, va_list ap);
 
