@@ -48,11 +48,39 @@ cee_init (void)
   old_syslog = dlsym (RTLD_NEXT, "syslog");
 }
 
+static struct json_object *
+_cee_json_vappend (struct json_object *json, va_list ap)
+{
+  char *key;
+
+  while ((key = (char *)va_arg (ap, char *)) != NULL)
+    {
+      char *fmt = (char *)va_arg (ap, char *);
+      char *value;
+
+      vasprintf (&value, fmt, ap);
+      json_object_object_add (json, key, json_object_new_string (value));
+      free (value);
+    }
+  return json;
+}
+
+static struct json_object *
+_cee_json_append (struct json_object *json, ...)
+{
+  va_list ap;
+
+  va_start (ap, json);
+  _cee_json_vappend (json, ap);
+  va_end (ap);
+
+  return json;
+}
+
 static const char *
 _cee_vformat (struct json_object **json, const char *msg_format, va_list ap)
 {
   struct json_object *jo;
-  char *key, *fmt;
   char *value;
 
   jo = json_object_new_object ();
@@ -61,15 +89,7 @@ _cee_vformat (struct json_object **json, const char *msg_format, va_list ap)
   json_object_object_add (jo, "msg", json_object_new_string (value));
   free (value);
 
-  while ((key = (char *)va_arg (ap, char *)) != NULL)
-    {
-      fmt = (char *)va_arg (ap, char *);
-
-      vasprintf (&value, fmt, ap);
-      json_object_object_add (jo, key,
-                              json_object_new_string (value));
-      free (value);
-    }
+  _cee_json_vappend (jo, ap);
 
   *json = jo;
   return json_object_to_json_string (jo);
@@ -105,7 +125,7 @@ cee_syslog (int priority, const char *msg_format, ...)
   va_list ap;
 
   va_start (ap, msg_format);
-  vsyslog (priority, msg_format, ap);
+  cee_vsyslog (priority, msg_format, ap);
   va_end (ap);
 }
 
