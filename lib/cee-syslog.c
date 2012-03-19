@@ -117,9 +117,3 @@ cee_vsyslog (int priority, const char *msg_format, va_list ap)
   old_syslog (priority, "@cee:%s", _cee_vformat (&jo, msg_format, ap));
   json_object_put (jo);
 }
-
-void syslog (int priority, const char *format, ...)
-  __attribute__((alias ("cee_syslog")));
-
-void vsyslog (int priority, const char *format, va_list ap)
-  __attribute__((alias ("cee_vsyslog")));
