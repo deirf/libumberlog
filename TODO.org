@@ -3,8 +3,8 @@
 #+TODO: TODO(t) WIP(p) MAYBE(m) | CANCELED(c) DONE(d)
 #+OPTIONS: tasks:todo
 
-* TODO Features
-** TODO More autodiscovery
+* WIP Features
+** WIP More autodiscovery
 *** DONE UID/GID discovery
 CLOSED: [2012-03-20 Tue 11:47]
 Cached by default, should be able to turn of caching with the global
@@ -20,13 +20,15 @@ Not enabled by default, can be toggled on with LOG_CEE_TIMESTAMP.
 Do we want it, at all? If so, cache gethostname() and be happy, or is
 there any other, better way?
 
-* TODO Documentation
-** TODO Manual pages
-We need manual pages for all the functions, one for each. We also need
-a way to document what the overridden syslog() calls do, without
-writing a new syslog(3) man page.
+* WIP Documentation
+** TODO cee-syslog(3)
+The main entry point of the documentation, will detail the purpose and
+goals of the library, along with the functions and constants it
+provides. cee_syslog(), cee_vsyslog(), cee_legacy_*(), cee_openlog()
+and cee_setlogmask() will be aliases to this page - similar how the
+syslog functions are documented. 
 
-*** MAYBE Perhaps export cee_legacy_syslog(), and write a man page for that?
+It makes much more sense to have a single page for them all.
 
 * DONE Test suite
 CLOSED: [2012-03-20 Tue 12:29]
