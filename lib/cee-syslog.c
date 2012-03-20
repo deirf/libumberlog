@@ -53,6 +53,7 @@ static __thread struct
 
   int facility;
   pid_t pid;
+  const char *ident;
 } cee_sys_settings;
 
 static void
@@ -71,6 +72,7 @@ cee_openlog (const char *ident, int option, int facility)
   cee_sys_settings.flags = option;
   cee_sys_settings.facility = facility;
   cee_sys_settings.pid = getpid ();
+  cee_sys_settings.ident = ident;
 }
 
 /** HELPERS **/
@@ -150,6 +152,7 @@ _cee_discover (struct json_object *jo, int priority)
                     "pid", "%d", _find_pid (),
                     "facility", "%s", _find_facility (),
                     "priority", "%s", _find_prio (priority),
+                    "program", "%s", cee_sys_settings.ident,
                     NULL);
 }
 
