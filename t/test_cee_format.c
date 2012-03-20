@@ -1,8 +1,13 @@
+#define _GNU_SOURCE 1
+
 #include "cee-syslog.h"
 #include <json.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
 
 static void
 verify_value (struct json_object *jo, const char *key,
@@ -124,12 +129,38 @@ test_additional_fields (void)
   closelog ();
 }
 
+static void
+test_discover_priority (void)
+{
+  char *msg, *pid;
+  struct json_object *jo;
+
+  openlog ("cee-syslog/test_discover_priority", 0, LOG_LOCAL0);
+
+  msg = cee_format (LOG_DEBUG, "testing 1, 2, 3...",
+                    "pid", "%d", getpid () + 42,
+                    NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "msg", "testing 1, 2, 3...");
+
+  asprintf (&pid, "%d", getpid ());
+  verify_value (jo, "pid", pid);
+  free (pid);
+
+  json_object_put (jo);
+
+  closelog ();
+}
+
 int
 main (void)
 {
   test_simple ();
   test_no_discover ();
   test_additional_fields ();
+  test_discover_priority ();
 
   return 0;
 }
