@@ -22,11 +22,7 @@ limitations.
 * It overrides **syslog()** (and **vsyslog()**), but does NOT extend
   those APIs. It merely turns a legacy syslog message into something
   that has a CEE payload, and unless turned off, it adds a few
-  automatically discovered fields (at the moment, these are *pid*,
-  *facility* and *priority* and *program*; *timestamp*, *uid*, *gid*
-  and *thread-id* are easy to collect aswell, the rest not so much,
-  but suggestions welcome. I do want to keep this list reasonably
-  short, and the costy discoveries will be toggleable).
+  automatically discovered fields.
 * It provides **cee_syslog()** (and **cee_vsyslog()**), which do the
   same as the `syslog()` call, have the same auto-discovery mechanism,
   but they also allow adding arbitrary key-value pairs.
