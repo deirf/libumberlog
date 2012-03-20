@@ -53,6 +53,8 @@ static __thread struct
 
   int facility;
   pid_t pid;
+  uid_t uid;
+  gid_t gid;
   const char *ident;
 } cee_sys_settings;
 
@@ -72,6 +74,8 @@ cee_openlog (const char *ident, int option, int facility)
   cee_sys_settings.flags = option;
   cee_sys_settings.facility = facility;
   cee_sys_settings.pid = getpid ();
+  cee_sys_settings.gid = getgid ();
+  cee_sys_settings.uid = getuid ();
   cee_sys_settings.ident = ident;
 }
 
@@ -104,13 +108,33 @@ _find_prio (int prio)
   return "<unknown>";
 }
 
-static inline const pid_t
+static inline pid_t
 _find_pid (void)
 {
   if (cee_sys_settings.flags & LOG_CEE_NOCACHE)
     return getpid ();
   else
     return cee_sys_settings.pid;
+}
+
+static inline uid_t
+_get_uid (void)
+{
+  if (cee_sys_settings.flags & LOG_CEE_NOCACHE ||
+      cee_sys_settings.flags & LOG_CEE_NOCACHE_UID)
+    return getuid ();
+  else
+    return cee_sys_settings.uid;
+}
+
+static inline uid_t
+_get_gid (void)
+{
+  if (cee_sys_settings.flags & LOG_CEE_NOCACHE ||
+      cee_sys_settings.flags & LOG_CEE_NOCACHE_UID)
+    return getgid ();
+  else
+    return cee_sys_settings.gid;
 }
 
 static struct json_object *
@@ -153,6 +177,8 @@ _cee_discover (struct json_object *jo, int priority)
                     "facility", "%s", _find_facility (),
                     "priority", "%s", _find_prio (priority),
                     "program", "%s", cee_sys_settings.ident,
+                    "uid", "%d", _get_uid (),
+                    "gid", "%d", _get_gid (),
                     NULL);
 }
 

@@ -5,7 +5,8 @@
 
 * TODO Features
 ** TODO More autodiscovery
-*** TODO UID/GID discovery
+*** DONE UID/GID discovery
+CLOSED: [2012-03-20 Tue 11:47]
 Cached by default, should be able to turn of caching with the global
 LOG_CEE_NOCACHE flag, and also with LOG_CEE_NOCACHE_UID flag.
 *** TODO Thread-id discovery

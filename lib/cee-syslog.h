@@ -31,8 +31,9 @@
 #include <syslog.h>
 #include <stdarg.h>
 
-#define LOG_CEE_NODISCOVER 0x40
-#define LOG_CEE_NOCACHE    0x80
+#define LOG_CEE_NODISCOVER      0x0040
+#define LOG_CEE_NOCACHE         0x0080
+#define LOG_CEE_NOCACHE_UID     0x0100
 
 char *cee_format (int priority, const char *msg_format, ...);
 char *cee_vformat (int priority, const char *msg_format, va_list ap);
