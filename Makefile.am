@@ -1,4 +1,4 @@
-SUBDIRS		= lib
+SUBDIRS		= lib t
 
 ACLOCAL_AMFLAGS	= -I m4 --install
 EXTRA_DIST	= LICENSE README.rst

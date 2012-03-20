@@ -28,12 +28,18 @@ writing a new syslog(3) man page.
 
 *** MAYBE Perhaps export cee_legacy_syslog(), and write a man page for that?
 
-* TODO Test suite
+* DONE Test suite
+CLOSED: [2012-03-20 Tue 12:29]
+- CLOSING NOTE [2012-03-20 Tue 12:29] \\
+  Test suite is in place.
 The test suite cannot test the syslog calls themselves, as that would
 be way too hacky to do properly. So it will test cee_format() instead,
 which is used by the syslog calls anyway.
 
-** TODO Decide how to test the library
+** DONE Decide how to test the library
+CLOSED: [2012-03-20 Tue 12:29]
+- CLOSING NOTE [2012-03-20 Tue 12:29] \\
+  It's decided, I'll do just that.
 I believe the best way to test would be to re-parse the JSON, extract
 the fields, and verify they're of the expected value and type.
 

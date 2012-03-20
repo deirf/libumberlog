@@ -58,4 +58,5 @@ AC_OUTPUT(
 	Makefile
         lib/Makefile
 	lib/libcee-syslog.pc
+        t/Makefile
 )
