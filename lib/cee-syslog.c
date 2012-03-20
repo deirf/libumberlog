@@ -42,12 +42,15 @@
 
 static void (*old_syslog) ();
 static void (*old_openlog) ();
+static int (*old_setlogmask) ();
 
 static void cee_init (void) __attribute__((constructor));
 
 static __thread struct
 {
+  int mask;
   int flags;
+
   int facility;
   pid_t pid;
 } cee_sys_settings;
@@ -57,12 +60,14 @@ cee_init (void)
 {
   old_syslog = dlsym (RTLD_NEXT, "syslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
+  old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
 
 void
 cee_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
+  cee_sys_settings.mask = old_setlogmask (0);
   cee_sys_settings.flags = option;
   cee_sys_settings.facility = facility;
   cee_sys_settings.pid = getpid ();
@@ -216,9 +221,13 @@ static inline void
 _cee_vsyslog (int format_version, int priority,
               const char *msg_format, va_list ap)
 {
-  struct json_object *jo = json_object_new_object ();
+  struct json_object *jo;
 
-  _cee_vformat (jo, format_version, priority, msg_format, ap);
+  if (!(cee_sys_settings.mask & priority))
+    return;
+
+  jo = _cee_vformat (json_object_new_object (), format_version,
+                     priority, msg_format, ap);
   old_syslog (priority, "@cee:%s", json_object_to_json_string (jo));
   json_object_put (jo);
 }
@@ -245,6 +254,14 @@ _cee_old_syslog (int priority, const char *msg_format, ...)
   va_end (ap);
 }
 
+int
+cee_setlogmask (int mask)
+{
+  if (mask != 0)
+    cee_sys_settings.mask = mask;
+  return old_setlogmask (mask);
+}
+
 void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("cee_openlog")));
 
@@ -253,3 +270,6 @@ void syslog (int priority, const char *msg_format, ...)
 
 void vsyslog (int priority, const char *msg_format, va_list ap)
   __attribute__((alias ("_cee_old_vsyslog")));
+
+int setlogmask (int mask)
+  __attribute__((alias ("cee_setlogmask")));
