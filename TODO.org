@@ -1,0 +1,44 @@
+# -*- org -*-
+#+STARTUP: indent showall lognotedone
+#+TODO: TODO(t) WIP(p) MAYBE(m) | CANCELED(c) DONE(d)
+#+OPTIONS: tasks:todo
+
+* TODO Features
+** TODO More autodiscovery
+*** TODO UID/GID discovery
+Cached by default, should be able to turn of caching with the global
+LOG_CEE_NOCACHE flag, and also with LOG_CEE_NOCACHE_UID flag.
+*** TODO Thread-id discovery
+Not cached by default, but can be turned on with LOG_CEE_CACHE_TID.
+*** TODO Timestamp in the payload
+Not enabled by default, can be toggled on with LOG_CEE_TIMESTAMP. 
+**** What precision do we want?
+*** MAYBE Hostname in the payload
+Do we want it, at all? If so, cache gethostname() and be happy, or is
+there any other, better way?
+
+* TODO Documentation
+** TODO Manual pages
+We need manual pages for all the functions, one for each. We also need
+a way to document what the overridden syslog() calls do, without
+writing a new syslog(3) man page.
+
+*** MAYBE Perhaps export cee_legacy_syslog(), and write a man page for that?
+
+* TODO Test suite
+The test suite cannot test the syslog calls themselves, as that would
+be way too hacky to do properly. So it will test cee_format() instead,
+which is used by the syslog calls anyway.
+
+** TODO Decide how to test the library
+I believe the best way to test would be to re-parse the JSON, extract
+the fields, and verify they're of the expected value and type.
+
+* TODO Examples
+While the test suite will provide some easier examples, it would be
+nice to have a bigger example program that show-cases all the function
+calls, with detailed documentation about the pitfalls, too.
+
+*** MAYBE Forked and threaded example?
+Ideally, this example would also fork and thread, just to be able to
+document how those things are affected.
