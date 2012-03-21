@@ -268,18 +268,18 @@ cee_vsyslog (int priority, const char *msg_format, va_list ap)
 }
 
 void
-_cee_old_vsyslog (int priority, const char *msg_format, va_list ap)
+cee_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
 {
   _cee_vsyslog (0, priority, msg_format, ap);
 }
 
 void
-_cee_old_syslog (int priority, const char *msg_format, ...)
+cee_legacy_syslog (int priority, const char *msg_format, ...)
 {
   va_list ap;
 
   va_start (ap, msg_format);
-  _cee_old_vsyslog (priority, msg_format, ap);
+  cee_legacy_vsyslog (priority, msg_format, ap);
   va_end (ap);
 }
 
@@ -295,10 +295,10 @@ void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("cee_openlog")));
 
 void syslog (int priority, const char *msg_format, ...)
-  __attribute__((alias ("_cee_old_syslog")));
+  __attribute__((alias ("cee_legacy_syslog")));
 
 void vsyslog (int priority, const char *msg_format, va_list ap)
-  __attribute__((alias ("_cee_old_vsyslog")));
+  __attribute__((alias ("cee_legacy_vsyslog")));
 
 int setlogmask (int mask)
   __attribute__((alias ("cee_setlogmask")));

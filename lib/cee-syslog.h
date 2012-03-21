@@ -40,7 +40,11 @@ char *cee_vformat (int priority, const char *msg_format, va_list ap);
 
 void cee_openlog (const char *ident, int option, int facility);
 int cee_setlogmask (int mask);
+
 void cee_syslog (int priority, const char *msg_format, ...);
 void cee_vsyslog (int priority, const char *msg_format, va_list ap);
+
+void cee_legacy_syslog (int priority, const char *msg_format, ...);
+void cee_legacy_vsyslog (int priority, const char *msg_format, va_list ap);
 
 #endif
