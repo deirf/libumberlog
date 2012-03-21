@@ -26,6 +26,13 @@ CLOSED: [2012-03-21 Wed 12:53]
   useful results.
 Do we want it, at all? If so, cache gethostname() and be happy, or is
 there any other, better way?
+** MAYBE Formatting of discovered stuff
+*** MAYBE Timestamp as long/long pair instead of formatted string?
+The timestamp is formatted to a string now, which is a considerable
+effort, and will need to be parsed back again. Do we want this? Or
+should we add the timestamp as a ts_sec & ts_nsec pair?
+
+It's probably best to stay with the string, though.
 
 * WIP Documentation
 ** TODO cee-syslog(3)
