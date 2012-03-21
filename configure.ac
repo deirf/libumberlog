@@ -35,11 +35,11 @@ AC_HEADER_STDC
 dnl ***************************************************************************
 dnl Header checks
 dnl ***************************************************************************
-AC_CHECK_HEADERS([syslog.h dlfcn.h])
+AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-dnl AC_CHECK_FUNCS()
+AC_CHECK_FUNCS([gethostname strdup])
 
 dnl ***************************************************************************
 dnl JSON-C headers/libraries
@@ -50,6 +50,8 @@ dnl ***************************************************************************
 dnl misc features to be enabled
 dnl ***************************************************************************
 AC_C_INLINE
+AC_TYPE_PID_T
+AC_TYPE_UID_T
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
