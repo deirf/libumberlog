@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <limits.h>
 
 #include "cee-syslog.h"
 
@@ -56,6 +57,7 @@ static __thread struct
   uid_t uid;
   gid_t gid;
   const char *ident;
+  char hostname[HOST_NAME_MAX + 1];
 } cee_sys_settings;
 
 static void
@@ -77,6 +79,8 @@ cee_openlog (const char *ident, int option, int facility)
   cee_sys_settings.gid = getgid ();
   cee_sys_settings.uid = getuid ();
   cee_sys_settings.ident = ident;
+
+  gethostname (cee_sys_settings.hostname, HOST_NAME_MAX);
 }
 
 /** HELPERS **/
@@ -137,6 +141,14 @@ _get_gid (void)
     return cee_sys_settings.gid;
 }
 
+static inline const char *
+_get_hostname (void)
+{
+  if (cee_sys_settings.flags & LOG_CEE_NOCACHE)
+    gethostname (cee_sys_settings.hostname, HOST_NAME_MAX);
+  return cee_sys_settings.hostname;
+}
+
 static struct json_object *
 _cee_json_vappend (struct json_object *json, va_list ap)
 {
@@ -179,6 +191,7 @@ _cee_discover (struct json_object *jo, int priority)
                     "program", "%s", cee_sys_settings.ident,
                     "uid", "%d", _get_uid (),
                     "gid", "%d", _get_gid (),
+                    "host", "%s", _get_hostname (),
                     NULL);
 }
 

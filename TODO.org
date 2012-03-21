@@ -16,7 +16,11 @@ a wrapper, so this also needs some configure-time discovery.
 *** TODO Timestamp in the payload
 Not enabled by default, can be toggled on with LOG_CEE_TIMESTAMP. 
 **** What precision do we want?
-*** MAYBE Hostname in the payload
+*** DONE Hostname in the payload
+CLOSED: [2012-03-21 Wed 12:53]
+- CLOSING NOTE [2012-03-21 Wed 12:53] \\
+  Done, we use gethostname(), as that's the easiest that yields somewhat
+  useful results.
 Do we want it, at all? If so, cache gethostname() and be happy, or is
 there any other, better way?
 

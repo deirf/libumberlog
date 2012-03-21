@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <limits.h>
 
 static void
 verify_value (struct json_object *jo, const char *key,
@@ -60,12 +61,15 @@ test_simple (void)
 {
   char *msg;
   struct json_object *jo;
+  char host[HOST_NAME_MAX + 1];
 
   openlog ("cee-syslog/test_simple", 0, LOG_LOCAL0);
 
   msg = cee_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
   jo = parse_msg (msg);
   free (msg);
+
+  gethostname (host, HOST_NAME_MAX);
 
   verify_value (jo, "msg", "hello, I'm test_simple!");
   verify_value (jo, "facility", "local0");
@@ -74,6 +78,7 @@ test_simple (void)
   verify_value_exists (jo, "pid");
   verify_value_exists (jo, "uid");
   verify_value_exists (jo, "gid");
+  verify_value (jo, "host", host);
 
   json_object_put (jo);
 
@@ -99,6 +104,7 @@ test_no_discover (void)
   verify_value_missing (jo, "pid");
   verify_value_missing (jo, "uid");
   verify_value_missing (jo, "gid");
+  verify_value_missing (jo, "host");
 
   json_object_put (jo);
 
