@@ -38,6 +38,7 @@
 #include <string.h>
 #include <syslog.h>
 #include <limits.h>
+#include <time.h>
 
 #include "cee-syslog.h"
 
@@ -179,6 +180,25 @@ _cee_json_append (struct json_object *json, ...)
 }
 
 static inline void
+_cee_json_append_timestamp (struct json_object *jo)
+{
+  struct timespec ts;
+  struct tm *tm;
+  char stamp[64], zone[16];
+
+  clock_gettime (CLOCK_REALTIME, &ts);
+
+  tm = localtime (&ts.tv_sec);
+
+  strftime (stamp, sizeof (stamp), "%FT%T", tm);
+  strftime (zone, sizeof (zone), "%z", tm);
+
+  _cee_json_append (jo, "timestamp", "%s.%lu%s",
+                    stamp, ts.tv_nsec, zone,
+                    NULL);
+}
+
+static inline void
 _cee_discover (struct json_object *jo, int priority)
 {
   if (cee_sys_settings.flags & LOG_CEE_NODISCOVER)
@@ -193,6 +213,11 @@ _cee_discover (struct json_object *jo, int priority)
                     "gid", "%d", _get_gid (),
                     "host", "%s", _get_hostname (),
                     NULL);
+
+  if (cee_sys_settings.flags & LOG_CEE_NOTIME)
+    return;
+
+  _cee_json_append_timestamp (jo);
 }
 
 static struct json_object *

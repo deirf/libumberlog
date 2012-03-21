@@ -34,6 +34,7 @@
 #define LOG_CEE_NODISCOVER      0x0040
 #define LOG_CEE_NOCACHE         0x0080
 #define LOG_CEE_NOCACHE_UID     0x0100
+#define LOG_CEE_NOTIME          0x0200
 
 char *cee_format (int priority, const char *msg_format, ...);
 char *cee_vformat (int priority, const char *msg_format, va_list ap);

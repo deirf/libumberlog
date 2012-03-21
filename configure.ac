@@ -39,7 +39,7 @@ AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-AC_CHECK_FUNCS([gethostname strdup])
+AC_CHECK_FUNCS([gethostname strdup clock_gettime])
 
 dnl ***************************************************************************
 dnl JSON-C headers/libraries

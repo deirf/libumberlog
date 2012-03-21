@@ -78,6 +78,7 @@ test_simple (void)
   verify_value_exists (jo, "pid");
   verify_value_exists (jo, "uid");
   verify_value_exists (jo, "gid");
+  verify_value_exists (jo, "timestamp");
   verify_value (jo, "host", host);
 
   json_object_put (jo);
@@ -105,6 +106,7 @@ test_no_discover (void)
   verify_value_missing (jo, "uid");
   verify_value_missing (jo, "gid");
   verify_value_missing (jo, "host");
+  verify_value_missing (jo, "timestamp");
 
   json_object_put (jo);
 
@@ -160,6 +162,33 @@ test_discover_priority (void)
   closelog ();
 }
 
+static void
+test_no_timestamp (void)
+{
+  char *msg;
+  struct json_object *jo;
+
+  openlog ("cee-syslog/test_no_timestamp", LOG_CEE_NOTIME, LOG_LOCAL0);
+
+  msg = cee_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "msg", "hello, I'm test_no_timestamp!");
+  verify_value (jo, "facility", "local0");
+  verify_value (jo, "priority", "debug");
+  verify_value (jo, "program", "cee-syslog/test_no_timestamp");
+  verify_value_exists (jo, "pid");
+  verify_value_exists (jo, "uid");
+  verify_value_exists (jo, "gid");
+  verify_value_missing (jo, "timestamp");
+  verify_value_exists (jo, "host");
+
+  json_object_put (jo);
+
+  closelog ();
+}
+
 int
 main (void)
 {
@@ -167,6 +196,7 @@ main (void)
   test_no_discover ();
   test_additional_fields ();
   test_discover_priority ();
+  test_no_timestamp ();
 
   return 0;
 }

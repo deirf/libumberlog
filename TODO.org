@@ -13,7 +13,10 @@ LOG_CEE_NOCACHE flag, and also with LOG_CEE_NOCACHE_UID flag.
 Not cached by default, but can be turned on with
 LOG_CEE_CACHE_TID. This is linux-specific, and glibc does not provide
 a wrapper, so this also needs some configure-time discovery.
-*** TODO Timestamp in the payload
+*** DONE Timestamp in the payload
+CLOSED: [2012-03-21 Wed 14:20]
+- CLOSING NOTE [2012-03-21 Wed 14:20] \\
+  Use clock_gettime(), and format the string with full precision.
 Not enabled by default, can be toggled on with LOG_CEE_TIMESTAMP. 
 **** What precision do we want?
 *** DONE Hostname in the payload
