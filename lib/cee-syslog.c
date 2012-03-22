@@ -42,7 +42,13 @@
 
 #include "cee-syslog.h"
 
+
+#if __USE_FORTIFY_LEVEL > 0
+static void (*old_syslog_chk) ();
+#else
 static void (*old_syslog) ();
+#endif
+
 static void (*old_openlog) ();
 static int (*old_setlogmask) ();
 
@@ -64,7 +70,11 @@ static __thread struct
 static void
 cee_init (void)
 {
+#if __USE_FORTIFY_LEVEL > 0
+  old_syslog_chk = dlsym (RTLD_NEXT, "__syslog_chk");
+#else
   old_syslog = dlsym (RTLD_NEXT, "syslog");
+#endif
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
@@ -297,7 +307,12 @@ _cee_vsyslog (int format_version, int priority,
 
   jo = _cee_vformat (json_object_new_object (), format_version,
                      priority, msg_format, ap);
+#if __USE_FORTIFY_LEVEL > 0
+  old_syslog_chk (priority, __USE_FORTIFY_LEVEL - 1, "@cee:%s",
+                  json_object_to_json_string (jo));
+#else
   old_syslog (priority, "@cee:%s", json_object_to_json_string (jo));
+#endif
   json_object_put (jo);
 }
 
@@ -330,6 +345,24 @@ cee_setlogmask (int mask)
     cee_sys_settings.mask = mask;
   return old_setlogmask (mask);
 }
+
+#if __USE_FORTIFY_LEVEL > 0
+void
+__syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
+{
+  va_list ap;
+
+  va_start (ap, __fmt);
+  cee_legacy_vsyslog (__pri, __fmt, ap);
+  va_end (ap);
+}
+
+void
+__vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
+{
+  cee_legacy_vsyslog (__pri, __fmt, ap);
+}
+#endif
 
 void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("cee_openlog")));
