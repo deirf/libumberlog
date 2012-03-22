@@ -3,13 +3,25 @@
 #+TODO: TODO(t) WIP(p) MAYBE(m) | CANCELED(c) DONE(d)
 #+OPTIONS: tasks:todo
 
-* WIP Features
-** WIP More autodiscovery
+* DONE Features
+CLOSED: [2012-03-22 Thu 18:05]
+- CLOSING NOTE [2012-03-22 Thu 18:05] \\
+  With all the planned features done or cancelled, we're feature-complete!
+** DONE More autodiscovery
+CLOSED: [2012-03-22 Thu 18:03]
+- CLOSING NOTE [2012-03-22 Thu 18:03]
 *** DONE UID/GID discovery
 CLOSED: [2012-03-20 Tue 11:47]
 Cached by default, should be able to turn of caching with the global
 LOG_CEE_NOCACHE flag, and also with LOG_CEE_NOCACHE_UID flag.
-*** TODO Thread-id discovery
+*** CANCELED Thread-id discovery
+CLOSED: [2012-03-22 Thu 18:02]
+- CLOSING NOTE [2012-03-22 Thu 18:02] \\
+  Not going to do it, it's more trouble than it's worth. We not only
+  have to figure out at compile time whether the platform supports
+  gettid(), at run time, we also need to figure out whether the kernel
+  supports it.. No thanks. Interested applications can just use
+  cee_syslog() and add it themselves.
 Not cached by default, but can be turned on with
 LOG_CEE_CACHE_TID. This is linux-specific, and glibc does not provide
 a wrapper, so this also needs some configure-time discovery.
@@ -26,8 +38,16 @@ CLOSED: [2012-03-21 Wed 12:53]
   useful results.
 Do we want it, at all? If so, cache gethostname() and be happy, or is
 there any other, better way?
-** MAYBE Formatting of discovered stuff
-*** MAYBE Timestamp as long/long pair instead of formatted string?
+** DONE Formatting of discovered stuff
+CLOSED: [2012-03-22 Thu 18:05]
+- CLOSING NOTE [2012-03-22 Thu 18:05]
+*** CANCELED Timestamp as long/long pair instead of formatted string?
+CLOSED: [2012-03-22 Thu 18:03]
+- CLOSING NOTE [2012-03-22 Thu 18:03] \\
+  The text format will do. It has the advantage of being a single value,
+  easily parsable and so on and so forth. Adding ts_sec and ts_nsec
+  would make less sense out of the box. People can do that by setting
+  LOG_CEE_NOTIME, and adding the info themselves.
 The timestamp is formatted to a string now, which is a considerable
 effort, and will need to be parsed back again. Do we want this? Or
 should we add the timestamp as a ts_sec & ts_nsec pair?
