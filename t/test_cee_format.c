@@ -153,7 +153,8 @@ test_discover_priority (void)
 
   verify_value (jo, "msg", "testing 1, 2, 3...");
 
-  asprintf (&pid, "%d", getpid ());
+  if (asprintf (&pid, "%d", getpid ()) == -1)
+    abort ();
   verify_value (jo, "pid", pid);
   free (pid);
 

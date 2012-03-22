@@ -160,7 +160,8 @@ _cee_json_vappend (struct json_object *json, va_list ap)
       char *fmt = (char *)va_arg (ap, char *);
       char *value;
 
-      vasprintf (&value, fmt, ap);
+      if (vasprintf (&value, fmt, ap) == -1)
+        abort ();
       json_object_object_add (json, key, json_object_new_string (value));
       free (value);
     }
@@ -227,7 +228,8 @@ _cee_vformat (struct json_object *jo, int format_version,
 {
   char *value;
 
-  vasprintf (&value, msg_format, ap);
+  if (vasprintf (&value, msg_format, ap) == -1)
+    abort ();
   json_object_object_add (jo, "msg", json_object_new_string (value));
   free (value);
 
