@@ -15,3 +15,5 @@ libcee_syslog_include_HEADERS	= \
 
 pkgconfigdir			= $(libdir)/pkgconfig
 pkgconfig_DATA			= libcee-syslog.pc
+
+man3_MANS			= cee_syslog.3

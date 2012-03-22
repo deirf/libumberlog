@@ -34,8 +34,13 @@ should we add the timestamp as a ts_sec & ts_nsec pair?
 
 It's probably best to stay with the string, though.
 
-* WIP Documentation
-** TODO cee-syslog(3)
+* DONE Documentation
+CLOSED: [2012-03-22 Thu 12:27]
+- CLOSING NOTE [2012-03-22 Thu 12:27]
+** DONE cee-syslog(3)
+CLOSED: [2012-03-22 Thu 12:27]
+- CLOSING NOTE [2012-03-22 Thu 12:27] \\
+  Manual page is now complete.
 The main entry point of the documentation, will detail the purpose and
 goals of the library, along with the functions and constants it
 provides. cee_syslog(), cee_vsyslog(), cee_legacy_*(), cee_openlog()
