@@ -9,11 +9,6 @@ LIBCEE_SYSLOG_0.1.0 {
           cee_legacy_vsyslog;
           cee_openlog;
           cee_setlogmask;
-        # Overrides
-          syslog;
-          vsyslog;
-          openlog;
-          setlogmask;
 
 	local:
         # Inherited from elsewhere, but should not be exported
