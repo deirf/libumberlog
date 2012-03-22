@@ -23,8 +23,9 @@ Non-goals
 Requirements
 ------------
 
-Apart from the autotools and a C compiler, there are no other hard
-dependencies when building, except for a sufficiently modern system.
+Apart from the autotools, a C compiler, and json-c, there are no other
+hard dependencies when building, except for a sufficiently modern
+system.
 
 Installation
 ------------
