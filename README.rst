@@ -4,31 +4,11 @@ libcee-syslog
 The libcee-syslog library serves two purposes: it's either a drop-in
 replacement for the ``syslog()`` system call, in which case it turns
 the default syslog messages into CEE-enhanced messages, with a
-CEE-JSON payload, and some automatically discovered fields. Or, it can
-be used as a stand-alone library, that provides a ``syslog()``-like
-API, with the ability to add arbitrary key-value pairs to the
-resulting JSON payload.
+CEE-JSON payload, and some automatically discovered fields.
 
-Features
---------
-
-libcee-syslog is supposed to be a thin layer, that provides a few
-benefits over legacy ``syslog()``, within reason, and with
-limitations.
-
-* It overrides **openlog()**, to be able to store extra flags, and
-  cache some stuff, if so need be. Currently, it caches the *pid* and
-  the *ident*.
-* It overrides **syslog()** (and **vsyslog()**), but does NOT extend
-  those APIs. It merely turns a legacy syslog message into something
-  that has a CEE payload, and unless turned off, it adds a few
-  automatically discovered fields.
-* It provides **cee_syslog()** (and **cee_vsyslog()**), which do the
-  same as the `syslog()` call, have the same auto-discovery mechanism,
-  but they also allow adding arbitrary key-value pairs.
-* It provides **cee_format()** (and **cee_vformat()**), which do the
-  same as the syslog calls, except the result is a newly allocated
-  string, that does not have a ``@cee:`` prefix.
+Or, it can be used as a stand-alone library, that provides a
+``syslog()``-like API, with the ability to add arbitrary key-value
+pairs to the resulting JSON payload.
 
 Non-goals
 ---------
