@@ -14,4 +14,9 @@ LIBCEE_SYSLOG_0.1.0 {
           vsyslog;
           openlog;
           setlogmask;
+
+	local:
+        # Inherited from elsewhere, but should not be exported
+          facilitynames;
+          prioritynames;
 };
