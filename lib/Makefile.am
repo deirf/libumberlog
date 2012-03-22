@@ -3,6 +3,7 @@ LCS_REVISION			= 0
 LCS_AGE				= 0
 
 lib_LTLIBRARIES			= libcee-syslog.la
+libcee_syslog_la_LDFLAGS	= -Wl,--version-script,${srcdir}/libcee-syslog.ld
 libcee_syslog_la_LIBADD		= @JSON_LIBS@ -ldl -lrt
 libcee_syslog_la_CFLAGS		= @JSON_CFLAGS@
 
