@@ -12,3 +12,11 @@
 /m4
 Makefile.in
 *~
+/debian/autoreconf.*
+/debian/build-tree/
+/debian/files
+/debian/*debhelper*
+/debian/*substvars
+/debian/tmp/
+/debian/libcee-syslog-dev/
+/debian/libcee-syslog0/
