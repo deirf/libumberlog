@@ -7,4 +7,4 @@ Name: libcee-syslog
 Version: @VERSION@
 Description: CEE-enhanced syslog() API
 URL: https://github.com/algernon/libcee-syslog
-Libs: -L${libdir} -lcee-syslog -ldl
+Libs: -L${libdir} -lcee-syslog
