@@ -1,0 +1,3 @@
+version=3
+
+https://github.com/algernon/libcee-syslog/tags .*/tarball/(\d[\d\.]+)

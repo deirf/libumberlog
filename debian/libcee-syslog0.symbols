@@ -1,0 +1,2 @@
+libcee-syslog.so.0 #PACKAGE# #MINVER#
+ (symver)LIBCEE_SYSLOG_0.1.0 0.1.0
