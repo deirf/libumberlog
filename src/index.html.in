@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>libumberlog - The CEE-enhanced syslog library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="brand" href="#">libumberlog</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li <!-- @home@ -->><a href="index.html">Home</a></li>
+              <li <!-- @api@ -->><a href="umberlog.html">API Docs</a></li>
+              <li><a href="https://github.com/algernon/libumberlog">Source</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+
+        <!-- @README@ -->
+
+      </div>
+
+      <hr>
+
+      <footer class="pull-right">
+        <p>&copy; 2012 BalaBit IT Security Ltd.</p>
+      </footer>
+
+    </div>
+  </body>
+</html>

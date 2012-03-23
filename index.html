@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>libumberlog - The CEE-enhanced syslog library</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="brand" href="#">libumberlog</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="index.html">Home</a></li>
+              <li ><a href="umberlog.html">API Docs</a></li>
+              <li><a href="https://github.com/algernon/libumberlog">Source</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+      <div class="row-fluid">
+
+        <!-- @README@ -->
+<h1 id="libumberlog">libumberlog</h1>
+<p>The libumberlog library serves two purposes: it's either a drop-in replacement for the <code>syslog()</code> system call, in which case it turns the default syslog messages into CEE-enhanced messages, with a CEE-JSON payload, and some automatically discovered fields.</p>
+<p>Or, it can be used as a stand-alone library, that provides a <code>syslog()</code>-like API, with the ability to add arbitrary key-value pairs to the resulting JSON payload.</p>
+<h2 id="non-goals">Non-goals</h2>
+<ul>
+<li>It is not a goal to support anything else but <code>syslog()</code> payload.</li>
+<li>It is not a goal to go to great lengths to discover things about the running process: only a few things that are easily available, no matter how reliable this information may be.</li>
+<li>It is not a goal to support complex values, or anything other than plain C strings.</li>
+</ul>
+<h2 id="requirements">Requirements</h2>
+<p>Apart from the autotools, a C compiler, and json-c, there are no other hard dependencies when building, except for a sufficiently modern system.</p>
+<h2 id="installation">Installation</h2>
+<p>The library follows the usual autotools way of installation:</p>
+<pre><code>$ git clone git://github.com/algernon/libumberlog.git
+$ cd libumberlog
+$ ./autogen.sh
+$ ./configure &amp;&amp; make &amp;&amp; make install</code></pre>
+<h2 id="usage">Usage</h2>
+<p>The library can either be used as an LD_PRELOAD-able shared object, in which case it overrides the system-supplied syslog() calls with its own, or as a proper library. In the latter case, please see the umberlog(3) manual page for more information.</p>
+<p>In the former case, using the library is as easy as setting LD_PRELOAD prior to executing a program (if one wants to control this on a per-program basis), or adding the path to the installed library to <code>/etc/ld.so.preload</code>.</p>
+<h2 id="license">License</h2>
+<p>This library is released under a two-clause BSD license, see the LICENSE file for details.</p>
+
+      </div>
+
+      <hr>
+
+      <footer class="pull-right">
+        <p>&copy; 2012 BalaBit IT Security Ltd.</p>
+      </footer>
+
+    </div>
+  </body>
+</html>
