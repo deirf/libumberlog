@@ -14,5 +14,3 @@ libumberlog_include_HEADERS	= umberlog.h
 
 pkgconfigdir			= $(libdir)/pkgconfig
 pkgconfig_DATA			= libumberlog.pc
-
-man3_MANS			= umberlog.3
