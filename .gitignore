@@ -18,5 +18,5 @@ Makefile.in
 /debian/*debhelper*
 /debian/*substvars
 /debian/tmp/
-/debian/libcee-syslog-dev/
-/debian/libcee-syslog0/
+/debian/libumberlog-dev/
+/debian/libumberlog0/
