@@ -9,5 +9,10 @@ override_dh_autoreconf:
 override_dh_installdocs:
 	dh_installdocs --link-doc=libumberlog0
 
+override_dh_auto_build:
+	dh_auto_build
+	install -d debian/tmp/usr/share/man/man3
+	rst2man lib/umberlog.rst debian/tmp/usr/share/man/man3/umberlog.3
+
 %:
 	dh $@ --with autoreconf
