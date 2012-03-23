@@ -3,8 +3,8 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 
-Name: libcee-syslog
+Name: libumberlog
 Version: @VERSION@
 Description: CEE-enhanced syslog() API
-URL: https://github.com/algernon/libcee-syslog
-Libs: -L${libdir} -lcee-syslog
+URL: https://github.com/algernon/libumberlog
+Libs: -L${libdir} -lumberlog

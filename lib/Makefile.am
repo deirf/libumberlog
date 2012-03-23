@@ -1,20 +1,16 @@
-LCS_CURRENT			= 0
-LCS_REVISION			= 0
-LCS_AGE				= 0
+LUL_CURRENT			= 0
+LUL_REVISION			= 0
+LUL_AGE				= 0
 
-lib_LTLIBRARIES			= libcee-syslog.la
-libcee_syslog_la_LDFLAGS	= -Wl,--version-script,${srcdir}/libcee-syslog.ld
-libcee_syslog_la_LIBADD		= @JSON_LIBS@ -ldl -lrt
-libcee_syslog_la_CFLAGS		= @JSON_CFLAGS@
+lib_LTLIBRARIES			= libumberlog.la
+libumberlog_la_LDFLAGS		= -Wl,--version-script,${srcdir}/libumberlog.ld
+libumberlog_la_LIBADD		= @JSON_LIBS@ -ldl -lrt
+libumberlog_la_CFLAGS		= @JSON_CFLAGS@
 
-libcee_syslog_la_SOURCES	= \
-	cee-syslog.c cee-syslog.h
+libumberlog_la_SOURCES		= umberlog.c umberlog.h
 
-libcee_syslog_includedir	= $(includedir)/cee
-libcee_syslog_include_HEADERS	= \
-	cee-syslog.h
+libumberlog_includedir		= $(includedir)
+libumberlog_include_HEADERS	= umberlog.h
 
 pkgconfigdir			= $(libdir)/pkgconfig
-pkgconfig_DATA			= libcee-syslog.pc
-
-man3_MANS			= libcee-syslog.3
+pkgconfig_DATA			= libumberlog.pc
