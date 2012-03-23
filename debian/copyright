@@ -1,7 +1,7 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: libcee-syslog
+Upstream-Name: libumberlog
 Upstream-Contact: Gergely Nagy <algernon@balabit.hu>
-Source: git://github.com/algernon/libcee-syslog.git
+Source: git://github.com/algernon/libumberlog.git
 Copyright: Copyright (C) 2012 BalaBit IT Security Ltd.
 License: BSDL-2
 

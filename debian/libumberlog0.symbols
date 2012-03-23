@@ -1,5 +1,5 @@
-libcee-syslog.so.0 #PACKAGE# #MINVER#
- (symver)LIBCEE_SYSLOG_0.1.0 0.1.0
+libumberlog.so.0 #PACKAGE# #MINVER#
+ (symver)LIBUMBERLOG_0.1.0 0.1.0
  (optional)__syslog_chk@Base 0.1.0
  (optional)__vsyslog_chk@Base 0.1.0
  openlog@Base 0.1.0

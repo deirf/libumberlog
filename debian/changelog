@@ -1,5 +1,5 @@
-libcee-syslog (0.1.0-1) unstable; urgency=low
+libumberlog (0.1.0-1) unstable; urgency=low
 
   * Initial release (Closes: #XXXX)
 
- -- Gergely Nagy <algernon@madhouse-project.org>  Thu, 22 Mar 2012 12:54:43 +0100
+ -- Gergely Nagy <algernon@madhouse-project.org>  Fri, 23 Mar 2012 11:06:36 +0100

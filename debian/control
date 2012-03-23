@@ -1,14 +1,14 @@
-Source: libcee-syslog
+Source: libumberlog
 Priority: extra
 Maintainer: Gergely Nagy <algernon@madhouse-project.org>
 Build-Depends: debhelper (>= 9~), dh-autoreconf, libjson0-dev (>= 0.7~)
 Standards-Version: 3.9.3
 Section: libs
-Homepage: https://github.com/algernon/libcee-syslog
-Vcs-Git: git://github.com/algernon/libcee-syslog.git
-Vcs-Browser: http://github.com/algernon/libcee-syslog/tree/debian
+Homepage: https://github.com/algernon/libumberlog
+Vcs-Git: git://github.com/algernon/libumberlog.git
+Vcs-Browser: http://github.com/algernon/libumberlog/tree/debian
 
-Package: libcee-syslog0
+Package: libumberlog0
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}
@@ -20,13 +20,13 @@ Description: CEE-enhanced syslog library
  and some automatically discovered fields.
  .
  Or, it can be used as a stand-alone library, that provides a
- ``syslog()``-like API, with the ability to add arbitrary key-value
- pairs to the resulting JSON payload.
+ syslog()-like API, with the ability to add arbitrary key-value pairs
+ to the resulting JSON payload.
 
-Package: libcee-syslog-dev
+Package: libumberlog-dev
 Section: libdevel
 Architecture: any
-Depends: libcee-syslog0 (= ${binary:Version}), pkg-config, ${misc:Depends}
+Depends: libumberlog0 (= ${binary:Version}), pkg-config, ${misc:Depends}
 Description: Development files for the CEE-enhanced syslog library
  This library serves two purposes: it's either a drop-in replacement
  for the syslog() system call, in which case it turns the default
@@ -34,9 +34,9 @@ Description: Development files for the CEE-enhanced syslog library
  and some automatically discovered fields.
  .
  Or, it can be used as a stand-alone library, that provides a
- ``syslog()``-like API, with the ability to add arbitrary key-value
- pairs to the resulting JSON payload.
+ syslog()-like API, with the ability to add arbitrary key-value pairs
+ to the resulting JSON payload.
  .
- This package is needed to compile programs against libcee-syslog0, as
+ This package is needed to compile programs against libumberlog0, as
  this contains the headers and pkg-config file. It is not needed when
  one only wants to use the library with LD_PRELOAD.
