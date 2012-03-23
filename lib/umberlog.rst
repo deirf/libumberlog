@@ -44,8 +44,8 @@ change these functions bring, are that the message they generate will
 be a CEE-enhanced message, with a JSON payload. See below for an
 explanation on what this means.
 
-_syslog()** and **ul_vsyslog()** are two new functions provided by the
-library, that have similar interface to the legacy **syslog()**
+**ul_syslog()** and **ul_vsyslog()** are two new functions provided by
+the library, that have similar interface to the legacy **syslog()**
 functions, but they can be used to add arbitrary key-value pairs to
 the emitted message. After the *msg_format* format string, and any
 other parameters it refers to, there must be a NULL-terminated list of
