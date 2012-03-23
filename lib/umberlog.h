@@ -1,4 +1,4 @@
-/* cee-syslog.h -- CEE-enhanced syslog API.
+/* umberlog.h -- CEE-enhanced syslog API.
  *
  * Copyright (c) 2012 BalaBit IT Security Ltd.
  * All rights reserved.
@@ -25,27 +25,27 @@
  * SUCH DAMAGE.
  */
 
-#ifndef CEE_SYSLOG_H
-#define CEE_SYSLOG_H 1
+#ifndef UMBERLOG_H
+#define UMBERLOG_H 1
 
 #include <syslog.h>
 #include <stdarg.h>
 
-#define LOG_CEE_NODISCOVER      0x0040
-#define LOG_CEE_NOCACHE         0x0080
-#define LOG_CEE_NOCACHE_UID     0x0100
-#define LOG_CEE_NOTIME          0x0200
+#define LOG_UL_NODISCOVER      0x0040
+#define LOG_UL_NOCACHE         0x0080
+#define LOG_UL_NOCACHE_UID     0x0100
+#define LOG_UL_NOTIME          0x0200
 
-char *cee_format (int priority, const char *msg_format, ...);
-char *cee_vformat (int priority, const char *msg_format, va_list ap);
+char *ul_format (int priority, const char *msg_format, ...);
+char *ul_vformat (int priority, const char *msg_format, va_list ap);
 
-void cee_openlog (const char *ident, int option, int facility);
-int cee_setlogmask (int mask);
+void ul_openlog (const char *ident, int option, int facility);
+int ul_setlogmask (int mask);
 
-void cee_syslog (int priority, const char *msg_format, ...);
-void cee_vsyslog (int priority, const char *msg_format, va_list ap);
+void ul_syslog (int priority, const char *msg_format, ...);
+void ul_vsyslog (int priority, const char *msg_format, va_list ap);
 
-void cee_legacy_syslog (int priority, const char *msg_format, ...);
-void cee_legacy_vsyslog (int priority, const char *msg_format, va_list ap);
+void ul_legacy_syslog (int priority, const char *msg_format, ...);
+void ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap);
 
 #endif

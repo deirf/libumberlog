@@ -1,4 +1,4 @@
-.\" cee-syslog.3 -- CEE-enhanced syslog manual
+.\" umberlog.3 -- CEE-enhanced syslog manual
 .\"
 .\" Copyright (c) 2012 BalaBit IT Security Ltd.
 .\" All rights reserved.
@@ -24,40 +24,40 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.TH CEE_SYSLOG 3 2012-03-22 "cee\-syslog" "CEE\-enhanced syslog Manual"
+.TH UMBERLOG 3 2012-03-22 "libumberlog" "CEE\-enhanced syslog Manual"
 
 .SH NAME
-cee_openlog, cee_syslog, cee_vsyslog, cee_legacy_syslog,
-cee_legacy_vsyslog \- send CEE-enhanced messages to the system logger
+ul_openlog, ul_syslog, ul_vsyslog, ul_legacy_syslog,
+ul_legacy_vsyslog \- send CEE-enhanced messages to the system logger
 .br
-cee_format, cee_vformat \- format CEE\-enhanced messages, without
+ul_format, ul_vformat \- format CEE\-enhanced messages, without
 sending them to the system logger
 
 .SH SYNOPSIS
-.B #include <cee/cee\-syslog.h>
+.B #include <umberlog.h>
 .sp
-.BI "void cee_openlog(const char *" ident ", int " option ", int " facility );
+.BI "void ul_openlog(const char *" ident ", int " option ", int " facility );
 .br
 
 .br
-.BI "void cee_syslog(int " priority ", const char *" format ", ...);"
+.BI "void ul_syslog(int " priority ", const char *" format ", ...);"
 .br
-.BI "void cee_vsyslog(int " priority ", const char *" format ", va_list " ap );
-.br
-
-.br
-.BI "void cee_legacy_syslog(int " priority ", const char *" format ", ...);"
-.br
-.BI "void cee_legacy_vsyslog(int " priority ", const char *" format ", va_list " ap );
+.BI "void ul_vsyslog(int " priority ", const char *" format ", va_list " ap );
 .br
 
 .br
-.BI "char *cee_format(int " priority ", const char *" format ", ...);"
+.BI "void ul_legacy_syslog(int " priority ", const char *" format ", ...);"
 .br
-.BI "char *cee_vformat(int " priority ", const char *" format ", va_list " ap );
+.BI "void ul_legacy_vsyslog(int " priority ", const char *" format ", va_list " ap );
+.br
+
+.br
+.BI "char *ul_format(int " priority ", const char *" format ", ...);"
+.br
+.BI "char *ul_vformat(int " priority ", const char *" format ", va_list " ap );
 
 .SH DESCRIPTION
-.BR cee_openlog (),
+.BR ul_openlog (),
 (also aliased to
 .BR openlog ())
 is a wrapper around the original
@@ -67,9 +67,9 @@ program. The updated version adds support for a number of new option
 flags, described below.
 
 .sp
-.BR cee_legacy_syslog ()
+.BR ul_legacy_syslog ()
 and
-.BR cee_legacy_vsyslog ()
+.BR ul_legacy_vsyslog ()
 are both thin layers over the original
 .BR syslog ()
 and
@@ -80,9 +80,9 @@ generate will be a CEE\-enhanced message, with a JSON payload. See
 below for an explanation on what this means.
 
 .sp
-.BR cee_syslog ()
+.BR ul_syslog ()
 and
-.BR cee_vsyslog ()
+.BR ul_vsyslog ()
 are two new functions provided by the library, that have similar
 interface to the legacy
 .BR syslog ()
@@ -100,9 +100,9 @@ and the
 will be added to the generated message.
 
 .sp
-.BR cee_format ()
+.BR ul_format ()
 and
-.BR cee_vformat ()
+.BR ul_vformat ()
 do the same as the syslog variants above, except the formatted payload
 is not sent to syslog, but returned as a newly allocated string.
 
@@ -117,7 +117,7 @@ original message put into the
 field, and any additional fields put into the same structure.
 
 By default, unless the
-.B LOG_CEE_NODISCOVER
+.B LOG_UL_NODISCOVER
 option flag is set, all of these functions will also add a few
 automatically discovered fields into the payload:
 
@@ -127,7 +127,7 @@ The process ID of the program, as returned by
 .BR getpid ().
 The value of this is \- by default \- determined at the time of
 calling
-.BR cee_openlog (),
+.BR ul_openlog (),
 but if caching is disabled, it will be rechecked every time.
 .TP
 .IR facility " and " priority
@@ -135,25 +135,25 @@ The syslog facility and priority as a text string.
 .TP
 .I program
 The identification set at the time of
-.BR cee_openlog ().
+.BR ul_openlog ().
 .TP
 .IR uid " and " gid
 The user and group ID of the process, determined at
-.BR cee_openlog ()
+.BR ul_openlog ()
 time by default, unless caching is disabled.
 .TP
 .I host
 The name of the originating host, determined at
-.BR cee_openlog ()
+.BR ul_openlog ()
 time by default, using
 .BR gethostname ().
 .TP
 .I timestamp
 High\-precision timestamp, in textual format. Included by default, but
 can be controlled by the
-.B LOG_CEE_NOTIME
+.B LOG_UL_NOTIME
 option flag at
-.BR cee_openlog ()
+.BR ul_openlog ()
 time.
 .PP
 
@@ -161,32 +161,32 @@ time.
 The
 .I option
 argument to
-.BR cee_openlog ()
+.BR ul_openlog ()
 is an OR of any of the original
 .BR openlog ()
 flags, and these:
 .TP 15
-.B LOG_CEE_NODISCOVER
+.B LOG_UL_NODISCOVER
 Disable all automatic\-discovery, and only include the
 .I message
 and any specified
 .I key\-value
 pairs in the generated message.
 .TP
-.B LOG_CEE_NOCACHE
+.B LOG_UL_NOCACHE
 When automatic discovery is enabled, disable caching certain
 properties, that might change between the call to
 .BR openlog ()
 and the
-.BR cee_syslog ()
+.BR ul_syslog ()
 invocation.
 .TP
-.B LOG_CEE_NOCACHE_UID
+.B LOG_UL_NOCACHE_UID
 Disable caching the
 .IR uid " and " gid
 caching when automatic discovery is enabled, but do cache the rest.
 .TP
-.B LOG_CEE_NOTIME
+.B LOG_UL_NOTIME
 Do not add a high\-precision timestamp to the generated message when
 automatic discovery is enabled.
 .PP
@@ -194,11 +194,11 @@ automatic discovery is enabled.
 .SH EXAMPLES
 .nf
 
-    cee_syslog(LOG_NOTICE, "Logged in user: %s", username,
-               "service", "%s", service,
-               "auth-method", "%s", auth_method,
-               "sessionid", "%d", session_id,
-               NULL);
+    ul_syslog(LOG_NOTICE, "Logged in user: %s", username,
+              "service", "%s", service,
+              "auth-method", "%s", auth_method,
+              "sessionid", "%d", session_id,
+              NULL);
 .fi
 
 .SH "SEE ALSO"
@@ -206,6 +206,6 @@ automatic discovery is enabled.
 
 .SH COLOPHON
 This page is part of the
-.I libcee\-syslog
+.I libumberlog
 project, and is available under the same 2-clause BSD license as the
 rest of the project.

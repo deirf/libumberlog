@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(libcee-syslog, 0.1.0, algernon@balabit.hu, libcee-syslog, https://github.com/algernon/libcee-syslog)
+AC_INIT(libumberlog, 0.1.0, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
 AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 dnl ***************************************************************************
@@ -59,6 +59,6 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
 AC_OUTPUT(
 	Makefile
         lib/Makefile
-	lib/libcee-syslog.pc
+	lib/libumberlog.pc
         t/Makefile
 )

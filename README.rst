@@ -1,7 +1,7 @@
-libcee-syslog
-=============
+libumberlog
+===========
 
-The libcee-syslog library serves two purposes: it's either a drop-in
+The libumberlog library serves two purposes: it's either a drop-in
 replacement for the ``syslog()`` system call, in which case it turns
 the default syslog messages into CEE-enhanced messages, with a
 CEE-JSON payload, and some automatically discovered fields.
@@ -34,8 +34,8 @@ The library follows the usual autotools way of installation:
 
 ::
 
- $ git clone git://github.com/algernon/libcee-syslog.git
- $ cd libcee-syslog
+ $ git clone git://github.com/algernon/libumberlog.git
+ $ cd libumberlog
  $ ./autogen.sh
  $ ./configure && make && make install
 
@@ -45,7 +45,7 @@ Usage
 The library can either be used as an LD_PRELOAD-able shared object, in
 which case it overrides the system-supplied syslog() calls with its
 own, or as a proper library. In the latter case, please see the
-libcee-syslog(3) manual page for more information.
+umberlog(3) manual page for more information.
 
 In the former case, using the library is as easy as setting LD_PRELOAD
 prior to executing a program (if one wants to control this on a

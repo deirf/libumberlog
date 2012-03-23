@@ -1,4 +1,4 @@
-/* cee-syslog.c -- CEE-enhanced syslog API.
+/* umberlog.c -- CEE-enhanced syslog API.
  *
  * Copyright (c) 2012 BalaBit IT Security Ltd.
  * All rights reserved.
@@ -40,8 +40,7 @@
 #include <limits.h>
 #include <time.h>
 
-#include "cee-syslog.h"
-
+#include "umberlog.h"
 
 #if __USE_FORTIFY_LEVEL > 0
 static void (*old_syslog_chk) ();
@@ -52,7 +51,7 @@ static void (*old_syslog) ();
 static void (*old_openlog) ();
 static int (*old_setlogmask) ();
 
-static void cee_init (void) __attribute__((constructor));
+static void ul_init (void) __attribute__((constructor));
 
 static __thread struct
 {
@@ -65,10 +64,10 @@ static __thread struct
   gid_t gid;
   const char *ident;
   char hostname[HOST_NAME_MAX + 1];
-} cee_sys_settings;
+} ul_sys_settings;
 
 static void
-cee_init (void)
+ul_init (void)
 {
 #if __USE_FORTIFY_LEVEL > 0
   old_syslog_chk = dlsym (RTLD_NEXT, "__syslog_chk");
@@ -80,18 +79,18 @@ cee_init (void)
 }
 
 void
-cee_openlog (const char *ident, int option, int facility)
+ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
-  cee_sys_settings.mask = old_setlogmask (0);
-  cee_sys_settings.flags = option;
-  cee_sys_settings.facility = facility;
-  cee_sys_settings.pid = getpid ();
-  cee_sys_settings.gid = getgid ();
-  cee_sys_settings.uid = getuid ();
-  cee_sys_settings.ident = ident;
+  ul_sys_settings.mask = old_setlogmask (0);
+  ul_sys_settings.flags = option;
+  ul_sys_settings.facility = facility;
+  ul_sys_settings.pid = getpid ();
+  ul_sys_settings.gid = getgid ();
+  ul_sys_settings.uid = getuid ();
+  ul_sys_settings.ident = ident;
 
-  gethostname (cee_sys_settings.hostname, HOST_NAME_MAX);
+  gethostname (ul_sys_settings.hostname, HOST_NAME_MAX);
 }
 
 /** HELPERS **/
@@ -101,10 +100,10 @@ _find_facility (void)
   int i = 0;
 
   while (facilitynames[i].c_name != NULL &&
-         facilitynames[i].c_val != cee_sys_settings.facility)
+         facilitynames[i].c_val != ul_sys_settings.facility)
     i++;
 
-  if (facilitynames[i].c_val == cee_sys_settings.facility)
+  if (facilitynames[i].c_val == ul_sys_settings.facility)
     return facilitynames[i].c_name;
   return "<unknown>";
 }
@@ -126,42 +125,42 @@ _find_prio (int prio)
 static inline pid_t
 _find_pid (void)
 {
-  if (cee_sys_settings.flags & LOG_CEE_NOCACHE)
+  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
     return getpid ();
   else
-    return cee_sys_settings.pid;
+    return ul_sys_settings.pid;
 }
 
 static inline uid_t
 _get_uid (void)
 {
-  if (cee_sys_settings.flags & LOG_CEE_NOCACHE ||
-      cee_sys_settings.flags & LOG_CEE_NOCACHE_UID)
+  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
+      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
     return getuid ();
   else
-    return cee_sys_settings.uid;
+    return ul_sys_settings.uid;
 }
 
 static inline uid_t
 _get_gid (void)
 {
-  if (cee_sys_settings.flags & LOG_CEE_NOCACHE ||
-      cee_sys_settings.flags & LOG_CEE_NOCACHE_UID)
+  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
+      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
     return getgid ();
   else
-    return cee_sys_settings.gid;
+    return ul_sys_settings.gid;
 }
 
 static inline const char *
 _get_hostname (void)
 {
-  if (cee_sys_settings.flags & LOG_CEE_NOCACHE)
-    gethostname (cee_sys_settings.hostname, HOST_NAME_MAX);
-  return cee_sys_settings.hostname;
+  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
+    gethostname (ul_sys_settings.hostname, HOST_NAME_MAX);
+  return ul_sys_settings.hostname;
 }
 
 static struct json_object *
-_cee_json_vappend (struct json_object *json, va_list ap)
+_ul_json_vappend (struct json_object *json, va_list ap)
 {
   char *key;
 
@@ -179,19 +178,19 @@ _cee_json_vappend (struct json_object *json, va_list ap)
 }
 
 static struct json_object *
-_cee_json_append (struct json_object *json, ...)
+_ul_json_append (struct json_object *json, ...)
 {
   va_list ap;
 
   va_start (ap, json);
-  _cee_json_vappend (json, ap);
+  _ul_json_vappend (json, ap);
   va_end (ap);
 
   return json;
 }
 
 static inline void
-_cee_json_append_timestamp (struct json_object *jo)
+_ul_json_append_timestamp (struct json_object *jo)
 {
   struct timespec ts;
   struct tm *tm;
@@ -204,37 +203,37 @@ _cee_json_append_timestamp (struct json_object *jo)
   strftime (stamp, sizeof (stamp), "%FT%T", tm);
   strftime (zone, sizeof (zone), "%z", tm);
 
-  _cee_json_append (jo, "timestamp", "%s.%lu%s",
-                    stamp, ts.tv_nsec, zone,
-                    NULL);
+  _ul_json_append (jo, "timestamp", "%s.%lu%s",
+                   stamp, ts.tv_nsec, zone,
+                   NULL);
 }
 
 static inline void
-_cee_discover (struct json_object *jo, int priority)
+_ul_discover (struct json_object *jo, int priority)
 {
-  if (cee_sys_settings.flags & LOG_CEE_NODISCOVER)
+  if (ul_sys_settings.flags & LOG_UL_NODISCOVER)
     return;
 
-  _cee_json_append (jo,
-                    "pid", "%d", _find_pid (),
-                    "facility", "%s", _find_facility (),
-                    "priority", "%s", _find_prio (priority),
-                    "program", "%s", cee_sys_settings.ident,
-                    "uid", "%d", _get_uid (),
-                    "gid", "%d", _get_gid (),
-                    "host", "%s", _get_hostname (),
-                    NULL);
+  _ul_json_append (jo,
+                   "pid", "%d", _find_pid (),
+                   "facility", "%s", _find_facility (),
+                   "priority", "%s", _find_prio (priority),
+                   "program", "%s", ul_sys_settings.ident,
+                   "uid", "%d", _get_uid (),
+                   "gid", "%d", _get_gid (),
+                   "host", "%s", _get_hostname (),
+                   NULL);
 
-  if (cee_sys_settings.flags & LOG_CEE_NOTIME)
+  if (ul_sys_settings.flags & LOG_UL_NOTIME)
     return;
 
-  _cee_json_append_timestamp (jo);
+  _ul_json_append_timestamp (jo);
 }
 
 static struct json_object *
-_cee_vformat (struct json_object *jo, int format_version,
-              int priority, const char *msg_format,
-              va_list ap)
+_ul_vformat (struct json_object *jo, int format_version,
+             int priority, const char *msg_format,
+             va_list ap)
 {
   char *value;
 
@@ -244,69 +243,69 @@ _cee_vformat (struct json_object *jo, int format_version,
   free (value);
 
   if (format_version > 0)
-    _cee_json_vappend (jo, ap);
+    _ul_json_vappend (jo, ap);
 
-  _cee_discover (jo, priority);
+  _ul_discover (jo, priority);
 
   return jo;
 }
 
 static inline const char *
-_cee_vformat_str (struct json_object *jo, int format_version,
-                  int priority, const char *msg_format,
-                  va_list ap)
+_ul_vformat_str (struct json_object *jo, int format_version,
+                 int priority, const char *msg_format,
+                 va_list ap)
 {
-  return json_object_to_json_string (_cee_vformat (jo, format_version,
-                                                   priority, msg_format,
-                                                   ap));
+  return json_object_to_json_string (_ul_vformat (jo, format_version,
+                                                  priority, msg_format,
+                                                  ap));
 }
 
 /** Public API **/
 char *
-cee_format (int priority, const char *msg_format, ...)
+ul_format (int priority, const char *msg_format, ...)
 {
   char *result;
   va_list ap;
 
   va_start (ap, msg_format);
-  result = cee_vformat (priority, msg_format, ap);
+  result = ul_vformat (priority, msg_format, ap);
   va_end (ap);
 
   return result;
 }
 
 char *
-cee_vformat (int priority, const char *msg_format, va_list ap)
+ul_vformat (int priority, const char *msg_format, va_list ap)
 {
   struct json_object *jo = json_object_new_object ();
   char *result;
 
-  result = strdup (_cee_vformat_str (jo, 1, priority, msg_format, ap));
+  result = strdup (_ul_vformat_str (jo, 1, priority, msg_format, ap));
   json_object_put (jo);
   return result;
 }
 
 void
-cee_syslog (int priority, const char *msg_format, ...)
+ul_syslog (int priority, const char *msg_format, ...)
 {
   va_list ap;
 
   va_start (ap, msg_format);
-  cee_vsyslog (priority, msg_format, ap);
+  ul_vsyslog (priority, msg_format, ap);
   va_end (ap);
 }
 
 static inline void
-_cee_vsyslog (int format_version, int priority,
-              const char *msg_format, va_list ap)
+_ul_vsyslog (int format_version, int priority,
+             const char *msg_format, va_list ap)
 {
   struct json_object *jo;
 
-  if (!(cee_sys_settings.mask & priority))
+  if (!(ul_sys_settings.mask & priority))
     return;
 
-  jo = _cee_vformat (json_object_new_object (), format_version,
-                     priority, msg_format, ap);
+  jo = _ul_vformat (json_object_new_object (), format_version,
+                    priority, msg_format, ap);
 #if __USE_FORTIFY_LEVEL > 0
   old_syslog_chk (priority, __USE_FORTIFY_LEVEL - 1, "@cee:%s",
                   json_object_to_json_string (jo));
@@ -317,32 +316,32 @@ _cee_vsyslog (int format_version, int priority,
 }
 
 void
-cee_vsyslog (int priority, const char *msg_format, va_list ap)
+ul_vsyslog (int priority, const char *msg_format, va_list ap)
 {
-  _cee_vsyslog (1, priority, msg_format, ap);
+  _ul_vsyslog (1, priority, msg_format, ap);
 }
 
 void
-cee_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
+ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
 {
-  _cee_vsyslog (0, priority, msg_format, ap);
+  _ul_vsyslog (0, priority, msg_format, ap);
 }
 
 void
-cee_legacy_syslog (int priority, const char *msg_format, ...)
+ul_legacy_syslog (int priority, const char *msg_format, ...)
 {
   va_list ap;
 
   va_start (ap, msg_format);
-  cee_legacy_vsyslog (priority, msg_format, ap);
+  ul_legacy_vsyslog (priority, msg_format, ap);
   va_end (ap);
 }
 
 int
-cee_setlogmask (int mask)
+ul_setlogmask (int mask)
 {
   if (mask != 0)
-    cee_sys_settings.mask = mask;
+    ul_sys_settings.mask = mask;
   return old_setlogmask (mask);
 }
 
@@ -353,25 +352,25 @@ __syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
   va_list ap;
 
   va_start (ap, __fmt);
-  cee_legacy_vsyslog (__pri, __fmt, ap);
+  ul_legacy_vsyslog (__pri, __fmt, ap);
   va_end (ap);
 }
 
 void
 __vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
 {
-  cee_legacy_vsyslog (__pri, __fmt, ap);
+  ul_legacy_vsyslog (__pri, __fmt, ap);
 }
 #endif
 
 void openlog (const char *ident, int option, int facility)
-  __attribute__((alias ("cee_openlog")));
+  __attribute__((alias ("ul_openlog")));
 
 void syslog (int priority, const char *msg_format, ...)
-  __attribute__((alias ("cee_legacy_syslog")));
+  __attribute__((alias ("ul_legacy_syslog")));
 
 void vsyslog (int priority, const char *msg_format, va_list ap)
-  __attribute__((alias ("cee_legacy_vsyslog")));
+  __attribute__((alias ("ul_legacy_vsyslog")));
 
 int setlogmask (int mask)
-  __attribute__((alias ("cee_setlogmask")));
+  __attribute__((alias ("ul_setlogmask")));

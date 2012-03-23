@@ -1,6 +1,6 @@
 #define _GNU_SOURCE 1
 
-#include "cee-syslog.h"
+#include "umberlog.h"
 #include <json.h>
 #include <assert.h>
 #include <string.h>
@@ -63,9 +63,9 @@ test_simple (void)
   struct json_object *jo;
   char host[HOST_NAME_MAX + 1];
 
-  openlog ("cee-syslog/test_simple", 0, LOG_LOCAL0);
+  openlog ("umberlog/test_simple", 0, LOG_LOCAL0);
 
-  msg = cee_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
   jo = parse_msg (msg);
   free (msg);
 
@@ -74,7 +74,7 @@ test_simple (void)
   verify_value (jo, "msg", "hello, I'm test_simple!");
   verify_value (jo, "facility", "local0");
   verify_value (jo, "priority", "debug");
-  verify_value (jo, "program", "cee-syslog/test_simple");
+  verify_value (jo, "program", "umberlog/test_simple");
   verify_value_exists (jo, "pid");
   verify_value_exists (jo, "uid");
   verify_value_exists (jo, "gid");
@@ -92,9 +92,9 @@ test_no_discover (void)
   char *msg;
   struct json_object *jo;
 
-  openlog ("cee-syslog/test_no_discover", LOG_CEE_NODISCOVER, LOG_LOCAL0);
+  openlog ("umberlog/test_no_discover", LOG_UL_NODISCOVER, LOG_LOCAL0);
 
-  msg = cee_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
   jo = parse_msg (msg);
   free (msg);
 
@@ -119,12 +119,12 @@ test_additional_fields (void)
   char *msg;
   struct json_object *jo;
 
-  openlog ("cee-syslog/test_additional_fields", 0, LOG_LOCAL0);
+  openlog ("umberlog/test_additional_fields", 0, LOG_LOCAL0);
 
-  msg = cee_format (LOG_DEBUG, "testing 1, 2, 3...",
-                    "random_number", "%d", 42,
-                    "random_string", "fourty-two",
-                    NULL);
+  msg = ul_format (LOG_DEBUG, "testing 1, 2, 3...",
+                   "random_number", "%d", 42,
+                   "random_string", "fourty-two",
+                   NULL);
   jo = parse_msg (msg);
   free (msg);
 
@@ -143,11 +143,11 @@ test_discover_priority (void)
   char *msg, *pid;
   struct json_object *jo;
 
-  openlog ("cee-syslog/test_discover_priority", 0, LOG_LOCAL0);
+  openlog ("umberlog/test_discover_priority", 0, LOG_LOCAL0);
 
-  msg = cee_format (LOG_DEBUG, "testing 1, 2, 3...",
-                    "pid", "%d", getpid () + 42,
-                    NULL);
+  msg = ul_format (LOG_DEBUG, "testing 1, 2, 3...",
+                   "pid", "%d", getpid () + 42,
+                   NULL);
   jo = parse_msg (msg);
   free (msg);
 
@@ -169,16 +169,16 @@ test_no_timestamp (void)
   char *msg;
   struct json_object *jo;
 
-  openlog ("cee-syslog/test_no_timestamp", LOG_CEE_NOTIME, LOG_LOCAL0);
+  openlog ("umberlog/test_no_timestamp", LOG_UL_NOTIME, LOG_LOCAL0);
 
-  msg = cee_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
   jo = parse_msg (msg);
   free (msg);
 
   verify_value (jo, "msg", "hello, I'm test_no_timestamp!");
   verify_value (jo, "facility", "local0");
   verify_value (jo, "priority", "debug");
-  verify_value (jo, "program", "cee-syslog/test_no_timestamp");
+  verify_value (jo, "program", "umberlog/test_no_timestamp");
   verify_value_exists (jo, "pid");
   verify_value_exists (jo, "uid");
   verify_value_exists (jo, "gid");
