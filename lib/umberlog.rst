@@ -8,7 +8,7 @@ CEE-enhanced syslog message generation
 
 :Author: Gergely Nagy <algernon@balabit.hu>
 :Date: 2012-03-23
-:Manual section: 1
+:Manual section: 3
 :Manual group: CEE-enhanced syslog Manual
 
 SYNOPSIS
