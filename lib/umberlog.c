@@ -45,8 +45,10 @@
 
 #if __USE_FORTIFY_LEVEL > 0
 static void (*old_syslog_chk) ();
+static void (*old_vsyslog_chk) ();
 #else
 static void (*old_syslog) ();
+static void (*old_vsyslog) ();
 #endif
 
 static void (*old_openlog) ();
@@ -67,13 +69,17 @@ static __thread struct
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_sys_settings;
 
+static __thread int ul_recurse;
+
 static void
 ul_init (void)
 {
 #if __USE_FORTIFY_LEVEL > 0
   old_syslog_chk = dlsym (RTLD_NEXT, "__syslog_chk");
+  old_vsyslog_chk = dlsym (RTLD_NEXT, "__vsyslog_chk");
 #else
   old_syslog = dlsym (RTLD_NEXT, "syslog");
+  old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
 #endif
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
@@ -388,7 +394,20 @@ ul_vsyslog (int priority, const char *msg_format, va_list ap)
 void
 ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
 {
-  _ul_vsyslog (0, priority, msg_format, ap);
+  if (ul_recurse)
+    {
+#if __USE_FORTIFY_LEVEL > 0
+      old_vsyslog_chk (priority, __USE_FORTIFY_LEVEL - 1, msg_format, ap);
+#else
+      old_vsyslog (priority, msg_format, ap);
+#endif
+    }
+  else
+    {
+      ul_recurse = 1;
+      _ul_vsyslog (0, priority, msg_format, ap);
+    }
+  ul_recurse = 0;
 }
 
 void
