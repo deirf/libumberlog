@@ -1,4 +1,4 @@
 usr/include/*
 usr/lib/*/lib*.so
 usr/lib/*/pkgconfig/*
-usr/share/man/man*/*
+debian/build-tree/lib/umberlog.3 /usr/share/man/man3/
