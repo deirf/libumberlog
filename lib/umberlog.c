@@ -94,7 +94,7 @@ ul_openlog (const char *ident, int option, int facility)
 }
 
 /** HELPERS **/
-static const char *
+static inline const char *
 _find_facility (void)
 {
   int i = 0;
@@ -108,7 +108,7 @@ _find_facility (void)
   return "<unknown>";
 }
 
-static const char *
+static inline const char *
 _find_prio (int prio)
 {
   int i = 0;
@@ -159,7 +159,7 @@ _get_hostname (void)
   return ul_sys_settings.hostname;
 }
 
-static struct json_object *
+static inline struct json_object *
 _ul_json_vappend (struct json_object *json, va_list ap)
 {
   char *key;
@@ -177,7 +177,7 @@ _ul_json_vappend (struct json_object *json, va_list ap)
   return json;
 }
 
-static struct json_object *
+static inline struct json_object *
 _ul_json_append (struct json_object *json, ...)
 {
   va_list ap;
@@ -230,7 +230,7 @@ _ul_discover (struct json_object *jo, int priority)
   _ul_json_append_timestamp (jo);
 }
 
-static struct json_object *
+static inline struct json_object *
 _ul_vformat (struct json_object *jo, int format_version,
              int priority, const char *msg_format,
              va_list ap)
