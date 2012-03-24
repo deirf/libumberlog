@@ -41,6 +41,18 @@ dnl ***************************************************************************
 dnl Checks for libraries
 AC_CHECK_FUNCS([gethostname strdup clock_gettime])
 
+dnl The dlopen() function is in the C library for *BSD and in
+dnl libdl on GLIBC-based systems
+AC_SEARCH_LIBS([dlopen], [dl dld], [], [
+  AC_MSG_ERROR([unable to find the dlopen() function])
+])
+
+dnl Similarly, clock_gettime is in the C library on *BSD, and in librt
+dnl on GLIBC-based systems.
+AC_SEARCH_LIBS([clock_gettime], [rt], [], [
+  AC_MSG_ERROR([unable to find the clock_gettime() function])
+])
+
 dnl ***************************************************************************
 dnl JSON-C headers/libraries
 dnl ***************************************************************************
