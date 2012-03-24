@@ -36,14 +36,17 @@
 #define LOG_UL_NOCACHE_UID     0x0100
 #define LOG_UL_NOTIME          0x0200
 
-char *ul_format (int priority, const char *msg_format, ...);
+char *ul_format (int priority, const char *msg_format, ...)
+  __attribute__((sentinel));
 char *ul_vformat (int priority, const char *msg_format, va_list ap);
 
 void ul_openlog (const char *ident, int option, int facility);
 int ul_setlogmask (int mask);
 
-void ul_syslog (int priority, const char *msg_format, ...);
-void ul_vsyslog (int priority, const char *msg_format, va_list ap);
+int ul_syslog (int priority, const char *msg_format, ...)
+  __attribute__((warn_unused_result, sentinel));
+int ul_vsyslog (int priority, const char *msg_format, va_list ap)
+  __attribute__((warn_unused_result));
 
 void ul_legacy_syslog (int priority, const char *msg_format, ...);
 void ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap);

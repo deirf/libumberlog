@@ -20,8 +20,8 @@ SYNOPSIS
 
    void ul_openlog (const char *ident, int option, int facility);
 
-   void ul_syslog (int priority, const char *format, ....);
-   void ul_vsyslog (int priority, const char *format, va_list ap);
+   int ul_syslog (int priority, const char *format, ....);
+   int ul_vsyslog (int priority, const char *format, va_list ap);
 
    void ul_legacy_syslog (int priority, const char *format, ...);
    void ul_legacy_vsyslog (int priority, const char *format, va_list ap);
@@ -44,8 +44,8 @@ change these functions bring, are that the message they generate will
 be a CEE-enhanced message, with a JSON payload. See below for an
 explanation on what this means.
 
-_syslog()** and **ul_vsyslog()** are two new functions provided by the
-library, that have similar interface to the legacy **syslog()**
+**ul_syslog()** and **ul_vsyslog()** are two new functions provided by
+the library, that have similar interface to the legacy **syslog()**
 functions, but they can be used to add arbitrary key-value pairs to
 the emitted message. After the *msg_format* format string, and any
 other parameters it refers to, there must be a NULL-terminated list of
@@ -56,6 +56,15 @@ will be added to the generated message.
 **ul_format()** and **ul_vformat()** do the same as the syslog
 variants above, except the formatted payload is not sent to syslog,
 but returned as a newly allocated string.
+
+RETURN VALUE
+============
+
+When successful, **ul_syslog()** and **ul_vsyslog()** return zero,
+while **ul_format()** and **ul_vformat()** return a character string.
+
+On failure the former two will return non-zero, the latter two
+**NULL**, and set *errno* appropriately.
 
 CEE PAYLOAD
 ===========
@@ -122,11 +131,11 @@ EXAMPLES
 
 ::
 
-    ul_syslog(LOG_NOTICE, "Logged in user: %s", username,
-              "service", "%s", service,
-              "auth-method", "%s", auth_method,
-              "sessionid", "%d", session_id,
-              NULL);
+    status = ul_syslog(LOG_NOTICE, "Logged in user: %s", username,
+                       "service", "%s", service,
+                       "auth-method", "%s", auth_method,
+                       "sessionid", "%d", session_id,
+                       NULL);
 
 SEE ALSO
 ========
