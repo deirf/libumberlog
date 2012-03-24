@@ -430,9 +430,11 @@ __vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
 void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("ul_openlog")));
 
+#undef syslog
 void syslog (int priority, const char *msg_format, ...)
   __attribute__((alias ("ul_legacy_syslog")));
 
+#undef vsyslog
 void vsyslog (int priority, const char *msg_format, va_list ap)
   __attribute__((alias ("ul_legacy_vsyslog")));
 
