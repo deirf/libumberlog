@@ -14,3 +14,5 @@ libumberlog_include_HEADERS	= umberlog.h
 
 pkgconfigdir			= $(libdir)/pkgconfig
 pkgconfig_DATA			= libumberlog.pc
+
+EXTRA_DIST			= umberlog.rst libumberlog.ld
