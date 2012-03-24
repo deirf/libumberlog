@@ -14,6 +14,9 @@
       .sidebar-nav {
         padding: 9px 0;
       }
+      #main {
+        padding-right: 100px;
+      }
     </style>
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
 
@@ -38,9 +41,12 @@
           </div>
         </div>
       </div>
+      <a href="http://github.com/algernon/libumberlog">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
+      </a>
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid" id="main">
       <div class="row-fluid">
 
         <!-- @README@ -->
@@ -59,8 +65,8 @@
 
 void ul_openlog (const char *ident, int option, int facility);
 
-void ul_syslog (int priority, const char *format, ....);
-void ul_vsyslog (int priority, const char *format, va_list ap);
+int ul_syslog (int priority, const char *format, ....);
+int ul_vsyslog (int priority, const char *format, va_list ap);
 
 void ul_legacy_syslog (int priority, const char *format, ...);
 void ul_legacy_vsyslog (int priority, const char *format, va_list ap);
@@ -72,6 +78,9 @@ void ul_vformat (int priority, const char *format, va_list ap);</code></pre>
 <p><strong>ul_legacy_syslog()</strong> and <strong>ul_legacy_vsyslog()</strong> are both thin layers over the original <strong>syslog()</strong> and <strong>vsyslog()</strong> functions, and the library overrides the original functions with this two. The only change these functions bring, are that the message they generate will be a CEE-enhanced message, with a JSON payload. See below for an explanation on what this means.</p>
 <p><strong>ul_syslog()</strong> and <strong>ul_vsyslog()</strong> are two new functions provided by the library, that have similar interface to the legacy <strong>syslog()</strong> functions, but they can be used to add arbitrary key-value pairs to the emitted message. After the <em>msg_format</em> format string, and any other parameters it refers to, there must be a NULL-terminated list of <em>key</em>, <em>value format</em>, <em>format parameters</em>. Each of these pairs, constructed from the <em>key</em> and the <strong>printf(3)</strong>-style <em>value format</em> will be added to the generated message.</p>
 <p><strong>ul_format()</strong> and <strong>ul_vformat()</strong> do the same as the syslog variants above, except the formatted payload is not sent to syslog, but returned as a newly allocated string.</p>
+<h3 id="return-value">RETURN VALUE</h3>
+<p>When successful, <strong>ul_syslog()</strong> and <strong>ul_vsyslog()</strong> return zero, while <strong>ul_format()</strong> and <strong>ul_vformat()</strong> return a character string.</p>
+<p>On failure the former two will return non-zero, the latter two <strong>NULL</strong>, and set <em>errno</em> appropriately.</p>
 <h3 id="cee-payload">CEE PAYLOAD</h3>
 <p>All of the improved <strong>syslog()</strong> functions, the legacy and overridden ones and the new ones too turn the original syslog message into a CEE-enabled JSON payload, with the original message put into the <em>msg</em> field, and any additional fields put into the same structure.</p>
 <p>By default, unless the <strong>LOG_UL_NODISCOVER</strong> option flag is set, all of these functions will also add a few automatically discovered fields into the payload:</p>
@@ -112,22 +121,24 @@ void ul_vformat (int priority, const char *format, va_list ap);</code></pre>
 </dd>
 </dl>
 <h3 id="examples">EXAMPLES</h3>
-<pre><code>ul_syslog(LOG_NOTICE, &quot;Logged in user: %s&quot;, username,
-          &quot;service&quot;, &quot;%s&quot;, service,
-          &quot;auth-method&quot;, &quot;%s&quot;, auth_method,
-          &quot;sessionid&quot;, &quot;%d&quot;, session_id,
-          NULL);</code></pre>
+<pre><code>status = ul_syslog(LOG_NOTICE, &quot;Logged in user: %s&quot;, username,
+                   &quot;service&quot;, &quot;%s&quot;, service,
+                   &quot;auth-method&quot;, &quot;%s&quot;, auth_method,
+                   &quot;sessionid&quot;, &quot;%d&quot;, session_id,
+                   NULL);</code></pre>
 <h3 id="see-also">SEE ALSO</h3>
 <p><strong>syslog(1)</strong></p>
 <h3 id="copyright">COPYRIGHT</h3>
 <p>This page is part of the <em>libumberlog</em> project, and is available under the same 2-clause BSD license as the rest of the project.</p>
 
       </div>
+    </div>
 
+    <div class="container-fluid">
       <hr>
 
       <footer class="pull-right">
-        <p>&copy; 2012 BalaBit IT Security Ltd.</p>
+        <p>&copy; 2012 <a href="http://www.balabit.com/">BalaBit IT Security Ltd.</a></p>
       </footer>
 
     </div>
