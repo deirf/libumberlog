@@ -61,7 +61,7 @@ test_simple (void)
 {
   char *msg;
   struct json_object *jo;
-  char host[HOST_NAME_MAX + 1];
+  char host[_POSIX_HOST_NAME_MAX + 1];
 
   openlog ("umberlog/test_simple", 0, LOG_LOCAL0);
 
@@ -69,7 +69,7 @@ test_simple (void)
   jo = parse_msg (msg);
   free (msg);
 
-  gethostname (host, HOST_NAME_MAX);
+  gethostname (host, _POSIX_HOST_NAME_MAX);
 
   verify_value (jo, "msg", "hello, I'm test_simple!");
   verify_value (jo, "facility", "local0");

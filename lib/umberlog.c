@@ -64,7 +64,7 @@ static __thread struct
   uid_t uid;
   gid_t gid;
   const char *ident;
-  char hostname[HOST_NAME_MAX + 1];
+  char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_sys_settings;
 
 static void
@@ -91,7 +91,7 @@ ul_openlog (const char *ident, int option, int facility)
   ul_sys_settings.uid = getuid ();
   ul_sys_settings.ident = ident;
 
-  gethostname (ul_sys_settings.hostname, HOST_NAME_MAX);
+  gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
 }
 
 /** HELPERS **/
@@ -156,7 +156,7 @@ static inline const char *
 _get_hostname (void)
 {
   if (ul_sys_settings.flags & LOG_UL_NOCACHE)
-    gethostname (ul_sys_settings.hostname, HOST_NAME_MAX);
+    gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
   return ul_sys_settings.hostname;
 }
 
