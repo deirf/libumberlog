@@ -4,7 +4,7 @@ Maintainer: Gergely Nagy <algernon@madhouse-project.org>
 Build-Depends: debhelper (>= 9~), dh-autoreconf, libjson0-dev (>= 0.7~), python-docutils
 Standards-Version: 3.9.3
 Section: libs
-Homepage: https://github.com/algernon/libumberlog
+Homepage: http://algernon.github.com/libumberlog/
 Vcs-Git: git://github.com/algernon/libumberlog.git
 Vcs-Browser: http://github.com/algernon/libumberlog/tree/debian
 
