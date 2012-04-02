@@ -1,4 +1,4 @@
-SUBDIRS		= lib t
+SUBDIRS		= data lib t
 
 ACLOCAL_AMFLAGS	= -I m4 --install
 EXTRA_DIST	= NEWS LICENSE README.rst

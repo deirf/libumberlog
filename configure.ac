@@ -70,6 +70,7 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
 
 AC_OUTPUT(
 	Makefile
+        data/Makefile
         lib/Makefile
 	lib/libumberlog.pc
         t/Makefile
