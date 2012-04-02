@@ -1,5 +1,18 @@
 #+STARTUP: indent showall                       -*- org -*-
 
+* 0.1.1 - <2012-04-02 Mon>
+
+** Override __syslog_chk, even when compiled without fortification
+
+In the first release, the library only exported and overridden
+__syslog_chk function if it was compiled with fortification
+enabled. This resulted in the library not working as expected on
+systems where fortification was enabled (such as Debian and Fedora).
+
+This release corrects that issue, and even by default, with
+fortification disabled, the built library will work as expected on all
+supported systems.
+
 * 0.1.0 - <2012-03-26 Mon>
 
 Initial release.

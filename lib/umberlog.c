@@ -41,16 +41,11 @@
 #include <time.h>
 #include <errno.h>
 
+#include "config.h"
 #include "umberlog.h"
 
-#if __USE_FORTIFY_LEVEL > 0
-static void (*old_syslog_chk) ();
-static void (*old_vsyslog_chk) ();
-#else
 static void (*old_syslog) ();
 static void (*old_vsyslog) ();
-#endif
-
 static void (*old_openlog) ();
 static int (*old_setlogmask) ();
 
@@ -74,13 +69,8 @@ static __thread int ul_recurse;
 static void
 ul_init (void)
 {
-#if __USE_FORTIFY_LEVEL > 0
-  old_syslog_chk = dlsym (RTLD_NEXT, "__syslog_chk");
-  old_vsyslog_chk = dlsym (RTLD_NEXT, "__vsyslog_chk");
-#else
   old_syslog = dlsym (RTLD_NEXT, "syslog");
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
-#endif
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
@@ -361,11 +351,7 @@ _ul_vsyslog (int format_version, int priority,
       return -1;
     }
 
-#if __USE_FORTIFY_LEVEL > 0
-  old_syslog_chk (priority, __USE_FORTIFY_LEVEL - 1, "@cee:%s", msg);
-#else
   old_syslog (priority, "@cee:%s", msg);
-#endif
 
   json_object_put (jo);
 
@@ -396,11 +382,7 @@ ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
 {
   if (ul_recurse)
     {
-#if __USE_FORTIFY_LEVEL > 0
-      old_vsyslog_chk (priority, __USE_FORTIFY_LEVEL - 1, msg_format, ap);
-#else
       old_vsyslog (priority, msg_format, ap);
-#endif
     }
   else
     {
@@ -428,7 +410,7 @@ ul_setlogmask (int mask)
   return old_setlogmask (mask);
 }
 
-#if __USE_FORTIFY_LEVEL > 0
+#if HAVE___SYSLOG_CHK
 void
 __syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
 {

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(libumberlog, 0.1.0, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
+AC_INIT(libumberlog, 0.1.1, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
 AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 dnl ***************************************************************************
@@ -39,7 +39,7 @@ AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-AC_CHECK_FUNCS([gethostname strdup clock_gettime])
+AC_CHECK_FUNCS([gethostname strdup __syslog_chk])
 
 dnl The dlopen() function is in the C library for *BSD and in
 dnl libdl on GLIBC-based systems
@@ -70,6 +70,7 @@ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
 
 AC_OUTPUT(
 	Makefile
+        data/Makefile
         lib/Makefile
 	lib/libumberlog.pc
         t/Makefile
