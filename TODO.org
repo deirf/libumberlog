@@ -84,6 +84,13 @@ CLOSED: [2012-03-20 Tue 12:29]
 I believe the best way to test would be to re-parse the JSON, extract
 the fields, and verify they're of the expected value and type.
 
+* TODO Bugfixes
+** TODO Missing va_copy() when passing around varargs
+The way we pass around varargs is unsafe, and causes crashes on a few
+systems where we would need to copy the thing around.
+
+We need a way to get the post-message key-value pairs some other way,
+or with using va_copy() and counting format strings and whatnot.
 * TODO Examples
 While the test suite will provide some easier examples, it would be
 nice to have a bigger example program that show-cases all the function
