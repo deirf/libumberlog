@@ -1,5 +1,17 @@
 #+STARTUP: indent showall                       -*- org -*-
 
+* 0.1.2 - <2012-04-08 Sun>
+
+** Portability fixes
+
+Up until now, the library abused that passing va_list around without
+copying works on various architectures. On others, that does not.
+
+To remedy the issue, the library now parses format strings itself, and
+copies va_list. This makes it work on all architectures, independent
+on the internal implementation of va_list, and preserves both API and
+ABI.
+
 * 0.1.1 - <2012-04-02 Mon>
 
 ** Override __syslog_chk, even when compiled without fortification

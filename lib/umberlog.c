@@ -40,6 +40,7 @@
 #include <limits.h>
 #include <time.h>
 #include <errno.h>
+#include <wchar.h>
 
 #include "config.h"
 #include "umberlog.h"
@@ -156,6 +157,80 @@ _get_hostname (void)
   return ul_sys_settings.hostname;
 }
 
+#define _ul_va_spin(fmt,ap)                             \
+  {                                                     \
+    size_t i;                                           \
+                                                        \
+    for (i = 0; i < strlen (fmt); i++)                  \
+      {                                                 \
+        int eof = 0;                                    \
+                                                        \
+        if (fmt[i] != '%')                              \
+          continue;                                     \
+        i++;                                            \
+        while (eof != 1)                                \
+          {                                             \
+            switch (fmt[i])                             \
+              {                                         \
+              case 'd':                                 \
+              case 'i':                                 \
+              case 'o':                                 \
+              case 'u':                                 \
+              case 'x':                                 \
+              case 'X':                                 \
+                if (fmt[i - 1] == 'l')                  \
+                  {                                     \
+                    if (i - 2 > 0 && fmt[i - 2] == 'l') \
+                      (void)va_arg (ap, long long int); \
+                    else                                \
+                      (void)va_arg (ap, long int);      \
+                  }                                     \
+                else                                    \
+                  (void)va_arg (ap, int);               \
+                eof = 1;                                \
+                break;                                  \
+              case 'e':                                 \
+              case 'E':                                 \
+              case 'f':                                 \
+              case 'F':                                 \
+              case 'g':                                 \
+              case 'G':                                 \
+              case 'a':                                 \
+              case 'A':                                 \
+                if (fmt[i - 1] == 'L')                  \
+                  (void)va_arg (ap, long double);       \
+                else                                    \
+                  (void)va_arg (ap, double);            \
+                eof = 1;                                \
+                break;                                  \
+              case 'c':                                 \
+                if (fmt [i - 1] == 'l')                 \
+                  (void)va_arg (ap, wint_t);            \
+                else                                    \
+                  (void)va_arg (ap, int);               \
+                eof = 1;                                \
+                break;                                  \
+              case 's':                                 \
+                if (fmt [i - 1] == 'l')                 \
+                  (void)va_arg (ap, wchar_t *);         \
+                else                                    \
+                  (void)va_arg (ap, char *);            \
+                eof = 1;                                \
+                break;                                  \
+              case 'p':                                 \
+                (void)va_arg (ap, void *);              \
+                eof = 1;                                \
+                break;                                  \
+              case '%':                                 \
+                eof = 1;                                \
+                break;                                  \
+              default:                                  \
+                i++;                                    \
+              }                                         \
+          }                                             \
+      }                                                 \
+  }
+
 static inline struct json_object *
 _ul_json_vappend (struct json_object *json, va_list ap)
 {
@@ -166,9 +241,16 @@ _ul_json_vappend (struct json_object *json, va_list ap)
       char *fmt = (char *)va_arg (ap, char *);
       char *value = NULL;
       struct json_object *jstr;
+      va_list aq;
 
-      if (vasprintf (&value, fmt, ap) == -1)
-        return NULL;
+      va_copy (aq, ap);
+      if (vasprintf (&value, fmt, aq) == -1)
+        {
+          va_end (aq);
+          return NULL;
+        }
+      va_end (aq);
+
       if (!value)
         return NULL;
 
@@ -181,7 +263,10 @@ _ul_json_vappend (struct json_object *json, va_list ap)
 
       json_object_object_add (json, key, jstr);
       free (value);
+
+      _ul_va_spin (fmt, ap);
     }
+
   return json;
 }
 
@@ -245,9 +330,15 @@ _ul_vformat (struct json_object *jo, int format_version,
 {
   char *value;
   struct json_object *jstr;
+  va_list aq;
 
-  if (vasprintf (&value, msg_format, ap) == -1)
-    return NULL;
+  va_copy (aq, ap);
+  if (vasprintf (&value, msg_format, aq) == -1)
+    {
+      va_end (aq);
+      return NULL;
+    }
+  va_end (aq);
   if (!value)
     return NULL;
 
@@ -260,6 +351,8 @@ _ul_vformat (struct json_object *jo, int format_version,
 
   json_object_object_add (jo, "msg", jstr);
   free (value);
+
+  _ul_va_spin (msg_format, ap);
 
   if (format_version > 0)
     jo = _ul_json_vappend (jo, ap);
