@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(libumberlog, 0.1.1, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
+AC_INIT(libumberlog, 0.1.2, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
 AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 dnl ***************************************************************************
