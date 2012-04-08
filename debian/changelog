@@ -1,3 +1,10 @@
+libumberlog (0.1.2-1) unstable; urgency=low
+
+  * New upstream release.
+    + Fixes compilation on most architectures.
+
+ -- Gergely Nagy <algernon@madhouse-project.org>  Sun, 08 Apr 2012 11:11:23 +0200
+
 libumberlog (0.1.1-1) unstable; urgency=low
 
   * Initial release (Closes: #665347)
