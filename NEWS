@@ -1,5 +1,21 @@
 #+STARTUP: indent showall                       -*- org -*-
 
+* 0.2.0
+
+** Remove the json-c dependency
+
+The library used very little from the features of json-c, as all we
+did was append key-value pairs, where both key and value were always
+strings. No nesting, no other funky stuff. It's easier to do this
+directly, without having to build a separate object and then serialize
+it into a string.
+
+For this reason, the json-c dependency was removed, and the library
+does the JSON formatting itself. However, json-c is still required for
+the test suite, but not otherwise.
+
+The result is a more compact JSON, and noticably increased speed.
+
 * 0.1.2 - <2012-04-08 Sun>
 
 ** Portability fixes
