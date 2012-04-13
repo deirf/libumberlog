@@ -214,7 +214,7 @@ ul_buffer_finalize (ul_buffer_t *buffer)
       if (!_ul_buffer_ensure_size (buffer, buffer->len + 1))
         return NULL;
       buffer->msg[buffer->len++] = '}';
-      buffer->msg[buffer->len] = '\0';
     }
+  buffer->msg[buffer->len] = '\0';
   return buffer->msg;
 }
