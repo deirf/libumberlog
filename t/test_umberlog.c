@@ -190,6 +190,35 @@ test_no_timestamp (void)
   closelog ();
 }
 
+static void
+test_json_escape (void)
+{
+  char *msg;
+  struct json_object *jo;
+
+  openlog ("umberlog/test_json_escape", LOG_UL_NODISCOVER, LOG_LOCAL0);
+
+  msg = ul_format (LOG_DEBUG, "%s", __FUNCTION__,
+                   "quotes", "Hi, \"quoted value\" speaking!",
+                   "\"really\"", "yeah",
+                   "control", "foo\nbar",
+                   "utf8", "Árvíztűrő tükörfúrógép",
+                   "junk", "\013foo",
+                   NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "quotes", "Hi, \"quoted value\" speaking!");
+  verify_value (jo, "\"really\"", "yeah");
+  verify_value (jo, "control", "foo\nbar");
+  verify_value (jo, "utf8", "Árvíztűrő tükörfúrógép");
+  verify_value (jo, "junk", "\013foo");
+
+  json_object_put (jo);
+
+  closelog ();
+}
+
 int
 main (void)
 {
@@ -198,6 +227,7 @@ main (void)
   test_additional_fields ();
   test_discover_priority ();
   test_no_timestamp ();
+  test_json_escape ();
 
   return 0;
 }
