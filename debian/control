@@ -26,7 +26,7 @@ Description: CEE-enhanced syslog library
 Package: libumberlog-dev
 Section: libdevel
 Architecture: any
-Depends: libumberlog0 (= ${binary:Version}), pkg-config, ${misc:Depends}
+Depends: libumberlog1 (= ${binary:Version}), pkg-config, ${misc:Depends}
 Description: Development files for the CEE-enhanced syslog library
  This library serves two purposes: it's either a drop-in replacement
  for the syslog() system call, in which case it turns the default
