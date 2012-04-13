@@ -35,11 +35,11 @@ AC_HEADER_STDC
 dnl ***************************************************************************
 dnl Header checks
 dnl ***************************************************************************
-AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h])
+AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h wchar.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-AC_CHECK_FUNCS([gethostname strdup __syslog_chk])
+AC_CHECK_FUNCS([gethostname strdup memset __syslog_chk])
 
 dnl The dlopen() function is in the C library for *BSD and in
 dnl libdl on GLIBC-based systems
@@ -62,8 +62,11 @@ dnl ***************************************************************************
 dnl misc features to be enabled
 dnl ***************************************************************************
 AC_C_INLINE
+AC_FUNC_MALLOC
+AC_FUNC_REALLOC
 AC_TYPE_PID_T
 AC_TYPE_UID_T
+AC_TYPE_SIZE_T
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
