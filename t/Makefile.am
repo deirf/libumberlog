@@ -1,4 +1,4 @@
-TESTS		= test_umberlog
+TESTS		= test_umberlog test_perf
 check_PROGRAMS	= ${TESTS}
 
 AM_CFLAGS = -I$(top_srcdir)/lib @JSON_CFLAGS@
