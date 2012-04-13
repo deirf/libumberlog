@@ -8,7 +8,7 @@ Homepage: http://algernon.github.com/libumberlog/
 Vcs-Git: git://github.com/algernon/libumberlog.git
 Vcs-Browser: http://github.com/algernon/libumberlog/tree/debian
 
-Package: libumberlog0
+Package: libumberlog1
 Architecture: any
 Multi-Arch: same
 Pre-Depends: ${misc:Pre-Depends}

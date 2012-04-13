@@ -1,8 +1,0 @@
-libumberlog.so.0 #PACKAGE# #MINVER#
- (symver)LIBUMBERLOG_0.1.0 0.1.0
- (optional)__syslog_chk@Base 0.1.0
- (optional)__vsyslog_chk@Base 0.1.0
- openlog@Base 0.1.0
- setlogmask@Base 0.1.0
- syslog@Base 0.1.0
- vsyslog@Base 0.1.0
