@@ -56,7 +56,7 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [], [
 dnl ***************************************************************************
 dnl JSON-C headers/libraries
 dnl ***************************************************************************
-PKG_CHECK_MODULES(JSON, json >= $JSON_C_MIN_VERSION,,)
+PKG_CHECK_MODULES(JSON, json >= $JSON_C_MIN_VERSION,[enable_tests="1"],[enable_tests="0"])
 
 dnl ***************************************************************************
 dnl misc features to be enabled
@@ -67,6 +67,8 @@ AC_TYPE_UID_T
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
+
+AM_CONDITIONAL(ENABLE_TESTS, [test "$enable_tests" = "1"])
 
 AC_OUTPUT(
 	Makefile
