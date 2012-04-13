@@ -97,7 +97,11 @@ systems where we would need to copy the thing around.
 
 We need a way to get the post-message key-value pairs some other way,
 or with using va_copy() and counting format strings and whatnot.
-* TODO Remove json-c dependency
+* WIP Remove json-c dependency
+- Note taken on [2012-04-13 Fri 12:09] \\
+  Work in progress: the buffer handling was moved to buffer.c, it does
+  the heavy lifting and JSON formatting. It does not do escaping yet,
+  however.
 We use very little of json-c, all we do is append key-value pairs,
 where both keys and values are always strings. We pretty much only use
 json-c to escape these for us, if so need be.

@@ -54,9 +54,9 @@ SSH Login::
 Requirements
 ------------
 
-Apart from the autotools, a C compiler, and `json\-c`_, there are no
-other hard dependencies when building, except for a sufficiently
-modern system.
+Apart from the autotools, a C compiler, and `json\-c`_ (for the test
+suite), there are no other hard dependencies when building, except for
+a sufficiently modern system.
 
 .. _json\-c: http://oss.metaparadigm.com/json-c/
 

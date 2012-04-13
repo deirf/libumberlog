@@ -31,7 +31,6 @@
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <json.h>
 #include <stdio.h>
 #include <dlfcn.h>
 #include <stdlib.h>
@@ -44,6 +43,7 @@
 
 #include "config.h"
 #include "umberlog.h"
+#include "buffer.h"
 
 static void (*old_syslog) ();
 static void (*old_vsyslog) ();
@@ -65,6 +65,7 @@ static __thread struct
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_sys_settings;
 
+static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
 
 static void
@@ -231,8 +232,8 @@ _get_hostname (void)
       }                                                 \
   }
 
-static inline struct json_object *
-_ul_json_vappend (struct json_object *json, va_list ap)
+static inline ul_buffer_t *
+_ul_json_vappend (ul_buffer_t *buffer, va_list ap)
 {
   char *key;
 
@@ -240,7 +241,6 @@ _ul_json_vappend (struct json_object *json, va_list ap)
     {
       char *fmt = (char *)va_arg (ap, char *);
       char *value = NULL;
-      struct json_object *jstr;
       va_list aq;
 
       va_copy (aq, ap);
@@ -254,36 +254,36 @@ _ul_json_vappend (struct json_object *json, va_list ap)
       if (!value)
         return NULL;
 
-      jstr = json_object_new_string (value);
-      if (!jstr)
+      buffer = ul_buffer_append (buffer, key, value);
+
+      if (buffer == NULL)
         {
           free (value);
           return NULL;
         }
 
-      json_object_object_add (json, key, jstr);
       free (value);
 
       _ul_va_spin (fmt, ap);
     }
 
-  return json;
+  return buffer;
 }
 
-static inline struct json_object *
-_ul_json_append (struct json_object *json, ...)
+static inline ul_buffer_t *
+_ul_json_append (ul_buffer_t *buffer, ...)
 {
   va_list ap;
 
-  va_start (ap, json);
-  json = _ul_json_vappend (json, ap);
+  va_start (ap, buffer);
+  buffer = _ul_json_vappend (buffer, ap);
   va_end (ap);
 
-  return json;
+  return buffer;
 }
 
-static inline struct json_object *
-_ul_json_append_timestamp (struct json_object *jo)
+static inline ul_buffer_t *
+_ul_json_append_timestamp (ul_buffer_t *buffer)
 {
   struct timespec ts;
   struct tm *tm;
@@ -296,40 +296,39 @@ _ul_json_append_timestamp (struct json_object *jo)
   strftime (stamp, sizeof (stamp), "%FT%T", tm);
   strftime (zone, sizeof (zone), "%z", tm);
 
-  return _ul_json_append (jo, "timestamp", "%s.%lu%s",
+  return _ul_json_append (buffer, "timestamp", "%s.%lu%s",
                           stamp, ts.tv_nsec, zone,
                           NULL);
 }
 
-static inline struct json_object *
-_ul_discover (struct json_object *jo, int priority)
+static inline ul_buffer_t *
+_ul_discover (ul_buffer_t *buffer, int priority)
 {
   if (ul_sys_settings.flags & LOG_UL_NODISCOVER)
-    return jo;
+    return buffer;
 
-  jo = _ul_json_append (jo,
-                        "pid", "%d", _find_pid (),
-                        "facility", "%s", _find_facility (),
-                        "priority", "%s", _find_prio (priority),
-                        "program", "%s", ul_sys_settings.ident,
-                        "uid", "%d", _get_uid (),
-                        "gid", "%d", _get_gid (),
-                        "host", "%s", _get_hostname (),
-                        NULL);
+  buffer = _ul_json_append (buffer,
+                            "pid", "%d", _find_pid (),
+                            "facility", "%s", _find_facility (),
+                            "priority", "%s", _find_prio (priority),
+                            "program", "%s", ul_sys_settings.ident,
+                            "uid", "%d", _get_uid (),
+                            "gid", "%d", _get_gid (),
+                            "host", "%s", _get_hostname (),
+                            NULL);
 
-  if (ul_sys_settings.flags & LOG_UL_NOTIME || !jo)
-    return jo;
+  if (ul_sys_settings.flags & LOG_UL_NOTIME || !buffer)
+    return buffer;
 
-  return _ul_json_append_timestamp (jo);
+  return _ul_json_append_timestamp (buffer);
 }
 
-static inline struct json_object *
-_ul_vformat (struct json_object *jo, int format_version,
+static inline ul_buffer_t *
+_ul_vformat (ul_buffer_t *buffer, int format_version,
              int priority, const char *msg_format,
              va_list ap)
 {
   char *value;
-  struct json_object *jstr;
   va_list aq;
 
   va_copy (aq, ap);
@@ -342,38 +341,37 @@ _ul_vformat (struct json_object *jo, int format_version,
   if (!value)
     return NULL;
 
-  jstr = json_object_new_string (value);
-  if (!jstr)
+  buffer = ul_buffer_append (buffer, "msg", value);
+  if (buffer == NULL)
     {
       free (value);
       return NULL;
     }
 
-  json_object_object_add (jo, "msg", jstr);
   free (value);
 
   _ul_va_spin (msg_format, ap);
 
   if (format_version > 0)
-    jo = _ul_json_vappend (jo, ap);
+    buffer = _ul_json_vappend (buffer, ap);
 
-  if (!jo)
+  if (!buffer)
     return NULL;
 
-  return _ul_discover (jo, priority);
+  return _ul_discover (buffer, priority);
 }
 
 static inline const char *
-_ul_vformat_str (struct json_object *jo, int format_version,
+_ul_vformat_str (ul_buffer_t *buffer, int format_version,
                  int priority, const char *msg_format,
                  va_list ap)
 {
-  jo = _ul_vformat (jo, format_version,
-                    priority, msg_format, ap);
-  if (!jo)
+  buffer = _ul_vformat (buffer, format_version,
+                        priority, msg_format, ap);
+  if (!buffer)
     return NULL;
 
-  return json_object_to_json_string (jo);
+  return ul_buffer_finalize (buffer);
 }
 
 /** Public API **/
@@ -393,26 +391,20 @@ ul_format (int priority, const char *msg_format, ...)
 char *
 ul_vformat (int priority, const char *msg_format, va_list ap)
 {
-  struct json_object *jo = json_object_new_object ();
   char *result;
   const char *msg;
+  ul_buffer_t *buffer = &ul_buffer;
 
-  if (!jo)
-    {
-      errno = ENOMEM;
-      return NULL;
-    }
+  ul_buffer_reset (buffer);
 
-  msg = _ul_vformat_str (jo, 1, priority, msg_format, ap);
+  msg = _ul_vformat_str (buffer, 1, priority, msg_format, ap);
   if (!msg)
     {
-      json_object_put (jo);
       errno = ENOMEM;
       return NULL;
     }
 
   result = strdup (msg);
-  json_object_put (jo);
   return result;
 }
 
@@ -420,33 +412,17 @@ static inline int
 _ul_vsyslog (int format_version, int priority,
              const char *msg_format, va_list ap)
 {
-  struct json_object *jo;
   const char *msg;
+  ul_buffer_t *buffer = &ul_buffer;
 
   if (!(ul_sys_settings.mask & priority))
     return 0;
 
-  jo = json_object_new_object ();
-  if (!jo)
+  buffer = _ul_vformat (buffer, format_version, priority, msg_format, ap);
+  if (buffer == NULL)
     return -1;
 
-  if (_ul_vformat (jo, format_version,
-                   priority, msg_format, ap) == NULL)
-    {
-      json_object_put (jo);
-      return -1;
-    }
-
-  msg = json_object_to_json_string (jo);
-  if (!msg)
-    {
-      json_object_put (jo);
-      return -1;
-    }
-
-  old_syslog (priority, "@cee:%s", msg);
-
-  json_object_put (jo);
+  old_syslog (priority, "@cee:%s", ul_buffer_finalize (buffer));
 
   return 0;
 }
