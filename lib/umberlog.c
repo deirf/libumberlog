@@ -51,6 +51,7 @@ static void (*old_openlog) ();
 static int (*old_setlogmask) ();
 
 static void ul_init (void) __attribute__((constructor));
+static void ul_finish (void) __attribute__((destructor));
 
 static __thread struct
 {
@@ -75,6 +76,12 @@ ul_init (void)
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
+}
+
+static void
+ul_finish (void)
+{
+  free (ul_buffer.msg);
 }
 
 void
