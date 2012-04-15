@@ -55,7 +55,7 @@ static const unsigned char json_exceptions[] =
   };
 
 static inline char *
-_ul_str_escape (const char *str)
+_ul_str_escape (const char *str, size_t *length)
 {
   const unsigned char *p;
   char *dest;
@@ -139,6 +139,8 @@ _ul_str_escape (const char *str)
     }
 
   *q = 0;
+  if (length)
+    *length = q - dest;
   return dest;
 }
 
@@ -170,18 +172,15 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
   char *k, *v;
   size_t lk, lv;
 
-  k = _ul_str_escape (key);
+  k = _ul_str_escape (key, &lk);
   if (!k)
     return NULL;
-  v = _ul_str_escape (value);
+  v = _ul_str_escape (value, &lv);
   if (!v)
     {
       free (k);
       return NULL;
     }
-
-  lk = strlen (k);
-  lv = strlen (v);
 
   buffer = _ul_buffer_ensure_size (buffer, buffer->len + lk + lv + 6);
   if (!buffer)
