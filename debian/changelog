@@ -1,9 +1,9 @@
-libumberlog (0.2.0~beta0-1) unstable; urgency=low
+libumberlog (0.2.0-1) unstable; urgency=low
 
   * New upstream release.
     + Drops json-c dependency; SONAME bumped.
 
- -- Gergely Nagy <algernon@madhouse-project.org>  Fri, 13 Apr 2012 14:41:54 +0200
+ -- Gergely Nagy <algernon@madhouse-project.org>  Thu, 19 Apr 2012 22:58:37 +0200
 
 libumberlog (0.1.2-1) unstable; urgency=low
 
