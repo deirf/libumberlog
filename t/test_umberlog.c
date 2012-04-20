@@ -219,6 +219,23 @@ test_json_escape (void)
   closelog ();
 }
 
+static void
+test_facprio (void)
+{
+  char *msg;
+  struct json_object *jo;
+
+  msg = ul_format (LOG_LOCAL1 | LOG_DEBUG, "%s", __FUNCTION__,
+                   NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "facility", "local1");
+  verify_value (jo, "priority", "debug");
+
+  json_object_put (jo);
+}
+
 int
 main (void)
 {
@@ -228,6 +245,7 @@ main (void)
   test_discover_priority ();
   test_no_timestamp ();
   test_json_escape ();
+  test_facprio ();
 
   return 0;
 }
