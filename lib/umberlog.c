@@ -348,6 +348,8 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
   if (!value)
     return NULL;
 
+  ul_buffer_reset (buffer);
+
   buffer = ul_buffer_append (buffer, "msg", value);
   if (buffer == NULL)
     {
@@ -401,8 +403,6 @@ ul_vformat (int priority, const char *msg_format, va_list ap)
   char *result;
   const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
-
-  ul_buffer_reset (buffer);
 
   msg = _ul_vformat_str (buffer, 1, priority, msg_format, ap);
   if (!msg)
