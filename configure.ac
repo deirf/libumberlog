@@ -54,9 +54,12 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [], [
 ])
 
 dnl ***************************************************************************
-dnl JSON-C headers/libraries
+dnl Libraries for the test suite
 dnl ***************************************************************************
 PKG_CHECK_MODULES(JSON, json >= $JSON_C_MIN_VERSION,[enable_tests="1"],[enable_tests="0"])
+if test "x$enable_tests" = "x1"; then
+  PKG_CHECK_MODULES(CHECK, check, [enable_tests="1"],[enable_tests="0"])
+fi
 
 dnl ***************************************************************************
 dnl misc features to be enabled
