@@ -1,5 +1,5 @@
 language: c
-install: sudo apt-get install libjson0-dev
+install: sudo apt-get install libjson0-dev check
 before_script:
   - ./autogen.sh
 script:
