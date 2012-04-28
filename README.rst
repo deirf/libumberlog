@@ -72,6 +72,8 @@ The library follows the usual autotools way of installation:
  $ ./autogen.sh
  $ ./configure && make && make install
 
+.. image:: https://secure.travis-ci.org/algernon/libumberlog.png?branch=master
+
 Usage
 -----
 
@@ -96,7 +98,7 @@ Non-goals
   matter how reliable this information may be.
 * It is not a goal to support complex values, or anything other than
   plain C strings.
-  
+
 License
 -------
 
