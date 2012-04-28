@@ -1,5 +1,30 @@
 #+STARTUP: indent showall                       -*- org -*-
 
+* 0.2.1
+
+** Fixed JSON formatting for syslog() messages
+
+In version 0.2.0, when converting to formatting the JSON output
+ourselves, a bug creeped in that made the library emit invalid JSON
+when used as an LD_PRELOAD-ed library.
+
+This has been corrected.
+
+** Facility and priority values are handled properly
+
+In all versions of the library the facility and priority handling was
+broken for all but the most trivial cases. This version fixes this
+issue aswell.
+
+** Previous openlog() settings are cleared at closelog() time
+
+In all former versions of the library, openlog() collected a set of
+information that was then used by all other functions, even after
+closelog() was called.
+
+Closing the log should return us to the default state, so we now wrap
+closelog() too, and the library resets its settings to their default.
+
 * 0.2.0 - <2012-04-16 Mon>
 
 ** Remove the json-c dependency

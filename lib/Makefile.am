@@ -1,6 +1,6 @@
-LUL_CURRENT			= 1
+LUL_CURRENT			= 2
 LUL_REVISION			= 0
-LUL_AGE				= 0
+LUL_AGE				= 1
 
 lib_LTLIBRARIES			= libumberlog.la
 libumberlog_la_LDFLAGS		= -Wl,--version-script,${srcdir}/libumberlog.ld \
