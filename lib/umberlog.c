@@ -48,6 +48,7 @@
 static void (*old_syslog) ();
 static void (*old_vsyslog) ();
 static void (*old_openlog) ();
+static void (*old_closelog) ();
 static int (*old_setlogmask) ();
 
 static void ul_init (void) __attribute__((constructor));
@@ -75,6 +76,7 @@ ul_init (void)
   old_syslog = dlsym (RTLD_NEXT, "syslog");
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
+  old_closelog = dlsym (RTLD_NEXT, "closelog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
 
@@ -97,6 +99,13 @@ ul_openlog (const char *ident, int option, int facility)
   ul_sys_settings.ident = ident;
 
   gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
+}
+
+void
+ul_closelog (void)
+{
+  old_closelog ();
+  memset (&ul_sys_settings, 0, sizeof (ul_sys_settings));
 }
 
 /** HELPERS **/
@@ -511,6 +520,9 @@ __vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
 
 void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("ul_openlog")));
+
+void closelog (void)
+  __attribute__((alias ("ul_closelog")));
 
 #undef syslog
 void syslog (int priority, const char *msg_format, ...)

@@ -236,6 +236,24 @@ test_facprio (void)
   json_object_put (jo);
 }
 
+static void
+test_closelog (void)
+{
+  char *msg;
+  struct json_object *jo;
+
+  openlog ("umberlog/test_closelog", LOG_UL_NODISCOVER, LOG_LOCAL0);
+  closelog ();
+
+  msg = ul_format (LOG_LOCAL1 | LOG_DEBUG, "%s", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "facility", "local1");
+
+  json_object_put (jo);
+}
+
 int
 main (void)
 {
@@ -246,6 +264,7 @@ main (void)
   test_no_timestamp ();
   test_json_escape ();
   test_facprio ();
+  test_closelog ();
 
   return 0;
 }

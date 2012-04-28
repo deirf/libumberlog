@@ -15,3 +15,8 @@ LIBUMBERLOG_0.1.0 {
           facilitynames;
           prioritynames;
 };
+
+LIBUMBERLOG_0.2.1 {
+	global:
+          ul_closelog;
+} LIBUMBERLOG_0.1.0;
