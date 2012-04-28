@@ -52,7 +52,7 @@
            widht="539" height="680">
 
       <a href="http://github.com/algernon/libumberlog">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/camo.github.com/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
       </a>
     </div>
 
@@ -76,13 +76,14 @@
     &quot;program&quot;: &quot;sshd&quot;, &quot;uid&quot;: &quot;0&quot;, &quot;gid&quot;: &quot;0&quot;,
     &quot;host&quot;: &quot;hadhodrond&quot;, &quot;timestamp&quot;: &quot;2012-03-24T12:01:34.236987887+0100&quot; }</code></pre>
 <h2 id="requirements">Requirements</h2>
-<p>Apart from the autotools, a C compiler, and <a href="http://oss.metaparadigm.com/json-c/">json-c</a>, there are no other hard dependencies when building, except for a sufficiently modern system.</p>
+<p>Apart from the autotools, a C compiler, and <a href="http://oss.metaparadigm.com/json-c/">json-c</a> (for the test suite), there are no other hard dependencies when building, except for a sufficiently modern system.</p>
 <h2 id="installation">Installation</h2>
 <p>The library follows the usual autotools way of installation:</p>
 <pre><code>$ git clone git://github.com/algernon/libumberlog.git
 $ cd libumberlog
 $ ./autogen.sh
 $ ./configure &amp;&amp; make &amp;&amp; make install</code></pre>
+<embed src="https://secure.travis-ci.org/algernon/libumberlog.png?branch=master">
 <h2 id="usage">Usage</h2>
 <p>The library can either be used as an LD_PRELOAD-able shared object, in which case it overrides the system-supplied <code>syslog()</code> calls with its own, or as a proper library. In the latter case, please see the <a href="http://algernon.github.com/libumberlog/umberlog.html">API documentation</a> for more information.</p>
 <p>In the former case, using the library is as easy as setting <strong>LD_PRELOAD</strong> prior to executing a program (if one wants to control this on a per-program basis), or adding the path to the installed library to <code>/etc/ld.so.preload</code>.</p>

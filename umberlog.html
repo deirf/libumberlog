@@ -52,7 +52,7 @@
            widht="539" height="680">
 
       <a href="http://github.com/algernon/libumberlog">
-        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/assets.github.com/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
+        <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://a248.e.akamai.net/camo.github.com/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub">
       </a>
     </div>
 
@@ -74,6 +74,7 @@
 <pre><code>#include &lt;umberlog.h&gt;
 
 void ul_openlog (const char *ident, int option, int facility);
+void ul_closelog (void);
 
 int ul_syslog (int priority, const char *format, ....);
 int ul_vsyslog (int priority, const char *format, va_list ap);
@@ -85,6 +86,7 @@ void ul_format (int priority, const char *format, ...);
 void ul_vformat (int priority, const char *format, va_list ap);</code></pre>
 <h3 id="description">DESCRIPTION</h3>
 <p><strong>ul_openlog()</strong> (also aliased to <strong>openlog()</strong>) is a wrapper around the original <strong>openlog()</strong> function, which opens a connection to the system logger for a program. The updated version adds support for a number of new option flags, described below.</p>
+<p><strong>ul_closelog()</strong> (also aliased to <strong>closelog()</strong>) is similar to <strong>ul_openlog()</strong> in that it is a wrapper around the original <strong>closelog()</strong>. It clears any settings set so far, to get back to a clean state.</p>
 <p><strong>ul_legacy_syslog()</strong> and <strong>ul_legacy_vsyslog()</strong> are both thin layers over the original <strong>syslog()</strong> and <strong>vsyslog()</strong> functions, and the library overrides the original functions with this two. The only change these functions bring, are that the message they generate will be a CEE-enhanced message, with a JSON payload. See below for an explanation on what this means.</p>
 <p><strong>ul_syslog()</strong> and <strong>ul_vsyslog()</strong> are two new functions provided by the library, that have similar interface to the legacy <strong>syslog()</strong> functions, but they can be used to add arbitrary key-value pairs to the emitted message. After the <em>msg_format</em> format string, and any other parameters it refers to, there must be a NULL-terminated list of <em>key</em>, <em>value format</em>, <em>format parameters</em>. Each of these pairs, constructed from the <em>key</em> and the <strong>printf(3)</strong>-style <em>value format</em> will be added to the generated message.</p>
 <p><strong>ul_format()</strong> and <strong>ul_vformat()</strong> do the same as the syslog variants above, except the formatted payload is not sent to syslog, but returned as a newly allocated string.</p>
