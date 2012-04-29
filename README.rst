@@ -57,10 +57,12 @@ Requirements
 Apart from the autotools, a C compiler, there are no other
 dependencies when building, except for a sufficiently modern system.
 
-The test suite requires `json\-c`_ and `check`_ too.
+The test suite requires `json\-c`_ and `check`_ too, and `docutils`_
+is required to build the documentation.
 
 .. _json\-c: http://oss.metaparadigm.com/json-c/
 .. _check: http://check.sourceforge.net/
+.. _docutils: http://docutils.sourceforge.net/
 
 Installation
 ------------
