@@ -24,6 +24,7 @@ AC_PROG_RANLIB
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
+AC_PATH_PROG([RST2MAN], [rst2man])
 LT_INIT([shared])
 
 dnl ***************************************************************************
@@ -75,6 +76,7 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
 
 AM_CONDITIONAL(ENABLE_TESTS, [test "$enable_tests" = "1"])
+AM_CONDITIONAL(ENABLE_MANS, [test "x$RST2MAN" != "x"])
 
 AC_OUTPUT(
 	Makefile

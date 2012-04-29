@@ -25,6 +25,7 @@ Makefile
 *.la
 core
 /lib/libumberlog.pc
+/lib/umberlog.3
 /t/test_perf
 /t/test_umberlog
 /debian/autoreconf.*
