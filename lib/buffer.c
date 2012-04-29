@@ -54,11 +54,20 @@ static const unsigned char json_exceptions[] =
     0xff,  '\0'
   };
 
+static __thread ul_buffer_t escape_buffer;
+
+static void ul_buffer_finish (void) __attribute__((destructor));
+
+static void
+ul_buffer_finish (void)
+{
+  free (escape_buffer.msg);
+}
+
 static inline char *
-_ul_str_escape (const char *str, size_t *length)
+_ul_str_escape (const char *str, char *dest, size_t *length)
 {
   const unsigned char *p;
-  char *dest;
   char *q;
   static unsigned char exmap[256];
   static int exmap_inited;
@@ -67,7 +76,7 @@ _ul_str_escape (const char *str, size_t *length)
     return NULL;
 
   p = (unsigned char *)str;
-  q = dest = malloc (strlen (str) * 6 + 1);
+  q = dest;
 
   if (!exmap_inited)
     {
@@ -171,34 +180,43 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 {
   char *k, *v;
   size_t lk, lv;
+  size_t orig_len = buffer->len;
 
-  k = _ul_str_escape (key, &lk);
+  /* Append the key to the buffer */
+  escape_buffer.len = 0;
+  _ul_buffer_ensure_size (&escape_buffer, strlen (key) * 6 + 1);
+  k = _ul_str_escape (key, escape_buffer.msg, &lk);
   if (!k)
     return NULL;
-  v = _ul_str_escape (value, &lv);
+
+  buffer = _ul_buffer_ensure_size (buffer, buffer->len + lk + 4);
+  if (!buffer)
+    return NULL;
+
+  memcpy (buffer->msg + buffer->len, "\"", 1);
+  memcpy (buffer->msg + buffer->len + 1, k, lk);
+  memcpy (buffer->msg + buffer->len + 1 + lk, "\":\"", 3);
+
+  /* Append the value to the buffer */
+  escape_buffer.len = 0;
+  _ul_buffer_ensure_size (&escape_buffer, strlen (value) * 6 + 1);
+  v = _ul_str_escape (value, escape_buffer.msg, &lv);
   if (!v)
     {
-      free (k);
+      buffer->len = orig_len;
       return NULL;
     }
 
   buffer = _ul_buffer_ensure_size (buffer, buffer->len + lk + lv + 6);
   if (!buffer)
     {
-      free (k);
-      free (v);
+      buffer->len = orig_len;
       return NULL;
     }
 
-  memcpy (buffer->msg + buffer->len, "\"", 1);
-  memcpy (buffer->msg + buffer->len + 1, k, lk);
-  memcpy (buffer->msg + buffer->len + 1 + lk, "\":\"", 3);
   memcpy (buffer->msg + buffer->len + 1 + lk + 3, v, lv);
   memcpy (buffer->msg + buffer->len + 1 + lk + 3 + lv, "\",", 2);
   buffer->len += lk + lv + 6;
-
-  free (k);
-  free (v);
 
   return buffer;
 }
