@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <limits.h>
 
+#include <check.h>
+
 static void
 verify_value (struct json_object *jo, const char *key,
               const char *expected_value)
@@ -19,12 +21,11 @@ verify_value (struct json_object *jo, const char *key,
 
   o = json_object_object_get (jo, key);
 
-  assert (o != NULL);
+  ck_assert (o != NULL);
 
   value = json_object_get_string (o);
 
-  assert (value != NULL);
-  assert (strcmp (value, expected_value) == 0);
+  ck_assert_str_eq (value, expected_value);
 }
 
 static void
@@ -33,7 +34,7 @@ verify_value_exists (struct json_object *jo, const char *key)
   struct json_object *o;
 
   o = json_object_object_get (jo, key);
-  assert (o != NULL);
+  ck_assert_msg (o != NULL, "key '%s' does not exist", key);
 }
 
 static void
@@ -56,8 +57,7 @@ parse_msg (const char *msg)
   return jo;
 }
 
-static void
-test_simple (void)
+START_TEST (test_simple)
 {
   char *msg;
   struct json_object *jo;
@@ -85,9 +85,9 @@ test_simple (void)
 
   closelog ();
 }
+END_TEST
 
-static void
-test_no_discover (void)
+START_TEST (test_no_discover)
 {
   char *msg;
   struct json_object *jo;
@@ -112,9 +112,9 @@ test_no_discover (void)
 
   closelog ();
 }
+END_TEST
 
-static void
-test_additional_fields (void)
+START_TEST (test_additional_fields)
 {
   char *msg;
   struct json_object *jo;
@@ -136,9 +136,9 @@ test_additional_fields (void)
 
   closelog ();
 }
+END_TEST
 
-static void
-test_discover_priority (void)
+START_TEST (test_discover_priority)
 {
   char *msg, *pid;
   struct json_object *jo;
@@ -162,9 +162,9 @@ test_discover_priority (void)
 
   closelog ();
 }
+END_TEST
 
-static void
-test_no_timestamp (void)
+START_TEST (test_no_timestamp)
 {
   char *msg;
   struct json_object *jo;
@@ -189,9 +189,9 @@ test_no_timestamp (void)
 
   closelog ();
 }
+END_TEST
 
-static void
-test_json_escape (void)
+START_TEST (test_json_escape)
 {
   char *msg;
   struct json_object *jo;
@@ -218,16 +218,72 @@ test_json_escape (void)
 
   closelog ();
 }
+END_TEST
+
+START_TEST (test_facprio)
+{
+  char *msg;
+  struct json_object *jo;
+
+  msg = ul_format (LOG_LOCAL1 | LOG_DEBUG, "%s", __FUNCTION__,
+                   NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "facility", "local1");
+  verify_value (jo, "priority", "debug");
+
+  json_object_put (jo);
+}
+END_TEST
+
+START_TEST (test_closelog)
+{
+  char *msg;
+  struct json_object *jo;
+
+  openlog ("umberlog/test_closelog", LOG_UL_NODISCOVER, LOG_LOCAL0);
+  closelog ();
+
+  msg = ul_format (LOG_LOCAL1 | LOG_DEBUG, "%s", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "facility", "local1");
+
+  json_object_put (jo);
+}
+END_TEST
 
 int
 main (void)
 {
-  test_simple ();
-  test_no_discover ();
-  test_additional_fields ();
-  test_discover_priority ();
-  test_no_timestamp ();
-  test_json_escape ();
+  Suite *s;
+  SRunner *sr;
+  TCase *ft, *bt;
+  int nfailed;
 
-  return 0;
+  s = suite_create ("Umberlog functional testsuite");
+
+  ft = tcase_create ("Basic tests");
+  tcase_add_test (ft, test_simple);
+  tcase_add_test (ft, test_no_discover);
+  tcase_add_test (ft, test_additional_fields);
+  tcase_add_test (ft, test_discover_priority);
+  tcase_add_test (ft, test_no_timestamp);
+  suite_add_tcase (s, ft);
+
+  bt = tcase_create ("Bug tests");
+  tcase_add_test (bt, test_json_escape);
+  tcase_add_test (bt, test_facprio);
+  tcase_add_test (bt, test_closelog);
+  suite_add_tcase (s, bt);
+
+  sr = srunner_create (s);
+
+  srunner_run_all (sr, CK_ENV);
+  nfailed = srunner_ntests_failed (sr);
+  srunner_free (sr);
+
+  return (nfailed == 0) ? EXIT_SUCCESS : EXIT_FAILURE;
 }

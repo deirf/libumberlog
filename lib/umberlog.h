@@ -41,6 +41,7 @@ char *ul_format (int priority, const char *msg_format, ...)
 char *ul_vformat (int priority, const char *msg_format, va_list ap);
 
 void ul_openlog (const char *ident, int option, int facility);
+void ul_closelog (void);
 int ul_setlogmask (int mask);
 
 int ul_syslog (int priority, const char *msg_format, ...)

@@ -1,7 +1,7 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(libumberlog, 0.1.2, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
+AC_INIT(libumberlog, 0.2.1, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
 AM_INIT_AUTOMAKE([1.9 tar-ustar])
 
 dnl ***************************************************************************
@@ -24,6 +24,7 @@ AC_PROG_RANLIB
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
+AC_PATH_PROG([RST2MAN], [rst2man])
 LT_INIT([shared])
 
 dnl ***************************************************************************
@@ -54,9 +55,12 @@ AC_SEARCH_LIBS([clock_gettime], [rt], [], [
 ])
 
 dnl ***************************************************************************
-dnl JSON-C headers/libraries
+dnl Libraries for the test suite
 dnl ***************************************************************************
 PKG_CHECK_MODULES(JSON, json >= $JSON_C_MIN_VERSION,[enable_tests="1"],[enable_tests="0"])
+if test "x$enable_tests" = "x1"; then
+  PKG_CHECK_MODULES(CHECK, check, [enable_tests="1"],[enable_tests="0"])
+fi
 
 dnl ***************************************************************************
 dnl misc features to be enabled
@@ -72,6 +76,7 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])
 
 AM_CONDITIONAL(ENABLE_TESTS, [test "$enable_tests" = "1"])
+AM_CONDITIONAL(ENABLE_MANS, [test "x$RST2MAN" != "x"])
 
 AC_OUTPUT(
 	Makefile

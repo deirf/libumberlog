@@ -48,9 +48,11 @@
 static void (*old_syslog) ();
 static void (*old_vsyslog) ();
 static void (*old_openlog) ();
+static void (*old_closelog) ();
 static int (*old_setlogmask) ();
 
 static void ul_init (void) __attribute__((constructor));
+static void ul_finish (void) __attribute__((destructor));
 
 static __thread struct
 {
@@ -74,7 +76,14 @@ ul_init (void)
   old_syslog = dlsym (RTLD_NEXT, "syslog");
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
+  old_closelog = dlsym (RTLD_NEXT, "closelog");
   old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
+}
+
+static void
+ul_finish (void)
+{
+  free (ul_buffer.msg);
 }
 
 void
@@ -92,17 +101,28 @@ ul_openlog (const char *ident, int option, int facility)
   gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
 }
 
+void
+ul_closelog (void)
+{
+  old_closelog ();
+  memset (&ul_sys_settings, 0, sizeof (ul_sys_settings));
+}
+
 /** HELPERS **/
 static inline const char *
-_find_facility (void)
+_find_facility (int prio)
 {
   int i = 0;
+  int fac = prio & LOG_FACMASK;
+
+  if (fac == 0)
+    fac = ul_sys_settings.facility;
 
   while (facilitynames[i].c_name != NULL &&
-         facilitynames[i].c_val != ul_sys_settings.facility)
+         facilitynames[i].c_val != fac)
     i++;
 
-  if (facilitynames[i].c_val == ul_sys_settings.facility)
+  if (facilitynames[i].c_val == fac)
     return facilitynames[i].c_name;
   return "<unknown>";
 }
@@ -111,12 +131,13 @@ static inline const char *
 _find_prio (int prio)
 {
   int i = 0;
+  int pri = LOG_PRI (prio);
 
   while (prioritynames[i].c_name != NULL &&
-         prioritynames[i].c_val != prio)
+         prioritynames[i].c_val != pri)
     i++;
 
-  if (prioritynames[i].c_val == prio)
+  if (prioritynames[i].c_val == pri)
     return prioritynames[i].c_name;
   return "<unknown>";
 }
@@ -309,7 +330,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
 
   buffer = _ul_json_append (buffer,
                             "pid", "%d", _find_pid (),
-                            "facility", "%s", _find_facility (),
+                            "facility", "%s", _find_facility (priority),
                             "priority", "%s", _find_prio (priority),
                             "program", "%s", ul_sys_settings.ident,
                             "uid", "%d", _get_uid (),
@@ -340,6 +361,8 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
   va_end (aq);
   if (!value)
     return NULL;
+
+  ul_buffer_reset (buffer);
 
   buffer = ul_buffer_append (buffer, "msg", value);
   if (buffer == NULL)
@@ -394,8 +417,6 @@ ul_vformat (int priority, const char *msg_format, va_list ap)
   char *result;
   const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
-
-  ul_buffer_reset (buffer);
 
   msg = _ul_vformat_str (buffer, 1, priority, msg_format, ap);
   if (!msg)
@@ -499,6 +520,9 @@ __vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
 
 void openlog (const char *ident, int option, int facility)
   __attribute__((alias ("ul_openlog")));
+
+void closelog (void)
+  __attribute__((alias ("ul_closelog")));
 
 #undef syslog
 void syslog (int priority, const char *msg_format, ...)
