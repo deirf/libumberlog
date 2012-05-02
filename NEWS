@@ -1,6 +1,6 @@
 #+STARTUP: indent showall                       -*- org -*-
 
-* 0.2.1
+* 0.2.1 - <2012-05-02 Wed>
 
 ** Fixed JSON formatting for syslog() messages
 
@@ -24,6 +24,12 @@ closelog() was called.
 
 Closing the log should return us to the default state, so we now wrap
 closelog() too, and the library resets its settings to their default.
+
+** Noticable performance increase
+
+The library was changed to try and do less memory allocations, and
+reuse memory instead of a malloc/free cycle. This results in a
+noticable performance increase under heavy load.
 
 * 0.2.0 - <2012-04-16 Mon>
 
