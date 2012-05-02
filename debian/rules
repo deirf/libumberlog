@@ -9,10 +9,6 @@ override_dh_autoreconf:
 override_dh_installdocs:
 	dh_installdocs --link-doc=libumberlog1
 
-override_dh_auto_build:
-	dh_auto_build
-	rst2man lib/umberlog.rst debian/build-tree/lib/umberlog.3
-
 override_dh_installchangelogs:
 	dh_installchangelogs NEWS
 
