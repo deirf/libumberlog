@@ -130,7 +130,7 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
             default:
               if ((*p < ' ') || (*p >= 0177))
                 {
-                  const char *json_hex_chars = "0123456789abcdef";
+                  static const char json_hex_chars[16] = "0123456789abcdef";
 
                   *q++ = '\\';
                   *q++ = 'u';
