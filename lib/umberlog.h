@@ -37,17 +37,17 @@
 #define LOG_UL_NOTIME          0x0200
 
 char *ul_format (int priority, const char *msg_format, ...)
-  __attribute__((sentinel));
-char *ul_vformat (int priority, const char *msg_format, va_list ap);
+  __attribute__((warn_unused_result, sentinel));
+char *ul_vformat (int priority, const char *msg_format, va_list ap)
+  __attribute__((warn_unused_result));
 
 void ul_openlog (const char *ident, int option, int facility);
 void ul_closelog (void);
 int ul_setlogmask (int mask);
 
 int ul_syslog (int priority, const char *msg_format, ...)
-  __attribute__((warn_unused_result, sentinel));
-int ul_vsyslog (int priority, const char *msg_format, va_list ap)
-  __attribute__((warn_unused_result));
+  __attribute__((sentinel));
+int ul_vsyslog (int priority, const char *msg_format, va_list ap);
 
 void ul_legacy_syslog (int priority, const char *msg_format, ...);
 void ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap);
