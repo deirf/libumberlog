@@ -437,7 +437,7 @@ _ul_vsyslog (int format_version, int priority,
   const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
 
-  if (!(ul_sys_settings.mask & priority))
+  if (!(ul_sys_settings.mask & LOG_MASK (LOG_PRI (priority))))
     return 0;
 
   buffer = _ul_vformat (buffer, format_version, priority, msg_format, ap);
