@@ -317,7 +317,7 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
   strftime (stamp, sizeof (stamp), "%FT%T", tm);
   strftime (zone, sizeof (zone), "%z", tm);
 
-  return _ul_json_append (buffer, "timestamp", "%s.%lu%s",
+  return _ul_json_append (buffer, "timestamp", "%s.%09lu%s",
                           stamp, ts.tv_nsec, zone,
                           NULL);
 }
