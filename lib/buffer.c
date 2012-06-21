@@ -44,7 +44,7 @@ ul_buffer_finish (void)
   free (escape_buffer.msg);
 }
 
-static inline char *
+static inline int
 _ul_str_escape (const char *str, char *dest, size_t *length)
 {
   /* Assumes ASCII!  Keep in sync with the switch! */
@@ -62,7 +62,7 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
   char *q;
 
   if (!str)
-    return NULL;
+    return -1;
 
   p = (unsigned char *)str;
   q = dest;
@@ -120,7 +120,7 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
   *q = 0;
   if (length)
     *length = q - dest;
-  return dest;
+  return 0;
 }
 
 static inline int
@@ -154,7 +154,6 @@ ul_buffer_reset (ul_buffer_t *buffer)
 ul_buffer_t *
 ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 {
-  char *k, *v;
   size_t lk, lv;
   size_t orig_len = buffer->len;
 
@@ -162,29 +161,27 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
   escape_buffer.len = 0;
   if (_ul_buffer_ensure_size (&escape_buffer, strlen (key) * 6 + 1) != 0)
     goto err;
-  k = _ul_str_escape (key, escape_buffer.msg, &lk);
-  if (!k)
-    return NULL;
+  if (_ul_str_escape (key, escape_buffer.msg, &lk) != 0)
+    goto err;
 
   if (_ul_buffer_ensure_size (buffer, buffer->len + lk + 4) != 0)
     goto err;
 
   memcpy (buffer->msg + buffer->len, "\"", 1);
-  memcpy (buffer->msg + buffer->len + 1, k, lk);
+  memcpy (buffer->msg + buffer->len + 1, escape_buffer.msg, lk);
   memcpy (buffer->msg + buffer->len + 1 + lk, "\":\"", 3);
 
   /* Append the value to the buffer */
   escape_buffer.len = 0;
   if (_ul_buffer_ensure_size (&escape_buffer, strlen (value) * 6 + 1) != 0)
     goto err;
-  v = _ul_str_escape (value, escape_buffer.msg, &lv);
-  if (!v)
+  if (_ul_str_escape (value, escape_buffer.msg, &lv) != 0)
     goto err;
 
   if (_ul_buffer_ensure_size (buffer, buffer->len + lk + lv + 6) != 0)
     goto err;
 
-  memcpy (buffer->msg + buffer->len + 1 + lk + 3, v, lv);
+  memcpy (buffer->msg + buffer->len + 1 + lk + 3, escape_buffer.msg, lv);
   memcpy (buffer->msg + buffer->len + 1 + lk + 3 + lv, "\",", 2);
   buffer->len += lk + lv + 6;
 
