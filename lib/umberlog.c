@@ -33,6 +33,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -204,7 +206,13 @@ _ul_va_spin (const char *fmt, va_list *pap)
 		  else
 		    (void)va_arg (*pap, long int);
 		}
-	      else
+	      else if (fmt[i - 1] == 'j')
+		(void)va_arg (*pap, intmax_t);
+	      else if (fmt[i - 1] == 'z')
+		(void)va_arg (*pap, ssize_t);
+	      else if (fmt[i - 1] == 't')
+		(void)va_arg (*pap, ptrdiff_t);
+	      else /* Also handles h, hh */
 		(void)va_arg (*pap, int);
 	      eof = 1;
 	      break;
@@ -229,6 +237,10 @@ _ul_va_spin (const char *fmt, va_list *pap)
 		(void)va_arg (*pap, int);
 	      eof = 1;
 	      break;
+	    case 'C':
+	      (void)va_arg (*pap, wint_t);
+	      eof = 1;
+	      break;
 	    case 's':
 	      if (fmt [i - 1] == 'l')
 		(void)va_arg (*pap, wchar_t *);
@@ -236,10 +248,43 @@ _ul_va_spin (const char *fmt, va_list *pap)
 		(void)va_arg (*pap, char *);
 	      eof = 1;
 	      break;
+	    case 'S':
+	      (void)va_arg (*pap, wchar_t *);
+	      eof = 1;
+	      break;
 	    case 'p':
 	      (void)va_arg (*pap, void *);
 	      eof = 1;
 	      break;
+	    case 'n':
+	      if (fmt[i - 1] == 'l')
+		{
+		  if (i - 2 > 0 && fmt[i - 2] == 'l')
+		    (void)va_arg (*pap, long long *);
+		  else
+		    (void)va_arg (*pap, long int *);
+		}
+	      else if (fmt[i - 1] == 'h')
+		{
+		  if (i - 2 > 0 && fmt[i - 2] == 'h')
+		    (void)va_arg (*pap, signed char *);
+		  else
+		    (void)va_arg (*pap, short int *);
+		}
+	      else if (fmt[i - 1] == 'j')
+		(void)va_arg (*pap, intmax_t *);
+	      else if (fmt[i - 1] == 'z')
+		(void)va_arg (*pap, ssize_t *);
+	      else if (fmt[i - 1] == 't')
+		(void)va_arg (*pap, ptrdiff_t *);
+	      else
+		(void)va_arg (*pap, int *);
+	      eof = 1;
+	      break;
+	    case '*':
+	      (void)va_arg (*pap, int);
+	      i++;
+	      break; /* eof stays set to 0 */
 	    case '%':
 	      eof = 1;
 	      break;
