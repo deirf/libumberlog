@@ -193,6 +193,11 @@ END_TEST
 
 START_TEST (test_json_escape)
 {
+  static const char control_chars[] =
+    "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f"
+    "\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f"
+    "\x20";
+
   char *msg;
   struct json_object *jo;
 
@@ -204,6 +209,7 @@ START_TEST (test_json_escape)
                    "control", "foo\nbar",
                    "utf8", "Árvíztűrő tükörfúrógép",
                    "junk", "\013foo",
+		   "all_control", control_chars,
                    NULL);
   jo = parse_msg (msg);
   free (msg);
@@ -213,6 +219,7 @@ START_TEST (test_json_escape)
   verify_value (jo, "control", "foo\nbar");
   verify_value (jo, "utf8", "Árvíztűrő tükörfúrógép");
   verify_value (jo, "junk", "\013foo");
+  verify_value (jo, "all_control", control_chars);
 
   json_object_put (jo);
 
