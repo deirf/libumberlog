@@ -73,7 +73,7 @@ The library follows the usual autotools way of installation:
 
  $ git clone git://github.com/algernon/libumberlog.git
  $ cd libumberlog
- $ ./autogen.sh
+ $ autoreconf -i
  $ ./configure && make && make install
 
 .. image:: https://secure.travis-ci.org/algernon/libumberlog.png?branch=master
