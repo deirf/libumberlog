@@ -37,7 +37,7 @@ typedef struct
   char *msg;
 } ul_buffer_t;
 
-ul_buffer_t *ul_buffer_reset (ul_buffer_t *buffer)
+int ul_buffer_reset (ul_buffer_t *buffer)
   __attribute__((visibility("hidden")));
 ul_buffer_t *ul_buffer_append (ul_buffer_t *buffer,
                                const char *key, const char *value)

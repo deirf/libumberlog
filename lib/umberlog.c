@@ -362,7 +362,8 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
   if (!value)
     return NULL;
 
-  ul_buffer_reset (buffer);
+  if (ul_buffer_reset (buffer) != 0)
+    return NULL;
 
   buffer = ul_buffer_append (buffer, "msg", value);
   if (buffer == NULL)
