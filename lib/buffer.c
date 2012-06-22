@@ -70,7 +70,7 @@ _ul_buffer_reserve_size (ul_buffer_t *buffer, size_t size)
 }
 
 static inline int
-_ul_str_escape (const char *str, char *dest, size_t *length)
+_ul_str_escape (ul_buffer_t *dest, const char *str)
 {
   /* Assumes ASCII!  Keep in sync with the switch! */
   static const unsigned char json_exceptions[UCHAR_MAX + 1] =
@@ -84,51 +84,85 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
     };
 
   const unsigned char *p;
-  char *q;
+  char *q, *end;
 
   if (!str)
     return -1;
 
   p = (unsigned char *)str;
-  q = dest;
+  q = dest->ptr;
+  end = dest->alloc_end;
+
+#define BUFFER_RESERVE(SIZE)                               \
+  do                                                       \
+    {                                                      \
+      if (end - q < (SIZE))                                \
+        {                                                  \
+          dest->ptr = q;                                   \
+          if (_ul_buffer_reserve_size (dest, (SIZE)) != 0) \
+            return -1;                                     \
+          q = dest->ptr;                                   \
+          end = dest->alloc_end;                           \
+        }                                                  \
+    }                                                      \
+  while (0)
 
   while (*p)
     {
       if (json_exceptions[*p] == 0)
-        *q++ = *p;
+        {
+          /* This is a slightly faster variant of equivalent to
+             BUFFER_RESERVE (1) */
+          if (q == end)
+            {
+              dest->ptr = q;
+              if (_ul_buffer_reserve_size (dest, 1) != 0)
+                return -1;
+              q = dest->ptr;
+              end = dest->alloc_end;
+            }
+          *q++ = *p;
+        }
       else
         {
           /* Keep in sync with json_exceptions! */
           switch (*p)
             {
             case '\b':
-              *q++ = '\\';
-              *q++ = 'b';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\b", 2);
+              q += 2;
               break;
             case '\n':
-              *q++ = '\\';
-              *q++ = 'n';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\n", 2);
+              q += 2;
               break;
             case '\r':
-              *q++ = '\\';
-              *q++ = 'r';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\r", 2);
+              q += 2;
               break;
             case '\t':
-              *q++ = '\\';
-              *q++ = 't';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\t", 2);
+              q += 2;
               break;
             case '\\':
-              *q++ = '\\';
-              *q++ = '\\';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\\\", 2);
+              q += 2;
               break;
             case '"':
-              *q++ = '\\';
-              *q++ = '"';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\\"", 2);
+              q += 2;
               break;
             default:
               {
                 static const char json_hex_chars[16] = "0123456789abcdef";
 
+                BUFFER_RESERVE (6);
                 *q++ = '\\';
                 *q++ = 'u';
                 *q++ = '0';
@@ -141,10 +175,8 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
         }
       p++;
     }
+  dest->ptr = q;
 
-  *q = 0;
-  if (length)
-    *length = q - dest;
   return 0;
 }
 
@@ -166,10 +198,9 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 
   /* Append the key to the buffer */
   escape_buffer.ptr = escape_buffer.msg;
-  if (_ul_buffer_reserve_size (&escape_buffer, strlen (key) * 6 + 1) != 0)
+  if (_ul_str_escape (&escape_buffer, key) != 0)
     goto err;
-  if (_ul_str_escape (key, escape_buffer.msg, &lk) != 0)
-    goto err;
+  lk = escape_buffer.ptr - escape_buffer.msg;
 
   if (_ul_buffer_reserve_size (buffer, lk + 4) != 0)
     goto err;
@@ -182,10 +213,9 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 
   /* Append the value to the buffer */
   escape_buffer.ptr = escape_buffer.msg;
-  if (_ul_buffer_reserve_size (&escape_buffer, strlen (value) * 6 + 1) != 0)
+  if (_ul_str_escape (&escape_buffer, value) != 0)
     goto err;
-  if (_ul_str_escape (value, escape_buffer.msg, &lv) != 0)
-    goto err;
+  lv = escape_buffer.ptr - escape_buffer.msg;
 
   if (_ul_buffer_reserve_size (buffer, lv + 2) != 0)
     goto err;
