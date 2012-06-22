@@ -103,10 +103,6 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
               *q++ = '\\';
               *q++ = 'b';
               break;
-            case '\f':
-              *q++ = '\\';
-              *q++ = 'f';
-              break;
             case '\n':
               *q++ = '\\';
               *q++ = 'n';
