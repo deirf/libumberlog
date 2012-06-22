@@ -34,16 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-static __thread ul_buffer_t escape_buffer;
-
-static void ul_buffer_finish (void) __attribute__((destructor));
-
-static void
-ul_buffer_finish (void)
-{
-  free (escape_buffer.msg);
-}
-
 static int
 _ul_buffer_realloc_to_reserve (ul_buffer_t *buffer, size_t size)
 {
@@ -193,35 +183,27 @@ ul_buffer_reset (ul_buffer_t *buffer)
 ul_buffer_t *
 ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 {
-  size_t lk, lv;
   size_t orig_len = buffer->ptr - buffer->msg;
 
   /* Append the key to the buffer */
-  escape_buffer.ptr = escape_buffer.msg;
-  if (_ul_str_escape (&escape_buffer, key) != 0)
+  if (_ul_buffer_reserve_size (buffer, 1) != 0)
     goto err;
-  lk = escape_buffer.ptr - escape_buffer.msg;
-
-  if (_ul_buffer_reserve_size (buffer, lk + 4) != 0)
-    goto err;
-
   *buffer->ptr++ = '"';
-  memcpy (buffer->ptr, escape_buffer.msg, lk);
-  buffer->ptr += lk;
+
+  if (_ul_str_escape (buffer, key) != 0)
+    goto err;
+
+  if (_ul_buffer_reserve_size (buffer, 3) != 0)
+    goto err;
   memcpy (buffer->ptr, "\":\"", 3);
   buffer->ptr += 3;
 
   /* Append the value to the buffer */
-  escape_buffer.ptr = escape_buffer.msg;
-  if (_ul_str_escape (&escape_buffer, value) != 0)
-    goto err;
-  lv = escape_buffer.ptr - escape_buffer.msg;
-
-  if (_ul_buffer_reserve_size (buffer, lv + 2) != 0)
+  if (_ul_str_escape (buffer, value) != 0)
     goto err;
 
-  memcpy (buffer->ptr, escape_buffer.msg, lv);
-  buffer->ptr += lv;
+  if (_ul_buffer_reserve_size (buffer, 2) != 0)
+    goto err;
   memcpy (buffer->ptr, "\",", 2);
   buffer->ptr += 2;
 
