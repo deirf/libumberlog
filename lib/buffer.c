@@ -44,6 +44,32 @@ ul_buffer_finish (void)
   free (escape_buffer.msg);
 }
 
+static int
+_ul_buffer_realloc_for_min (ul_buffer_t *buffer, size_t min)
+{
+  size_t new_alloc;
+  void *new_msg;
+
+  new_alloc = buffer->alloc + min * 2;
+  new_msg = realloc (buffer->msg, new_alloc);
+  if (new_msg == NULL)
+    return -1;
+  buffer->alloc = new_alloc;
+  buffer->msg = new_msg;
+  return 0;
+}
+
+static inline int
+_ul_buffer_reserve_size (ul_buffer_t *buffer, size_t size)
+{
+  size_t min;
+
+  min = buffer->len + size;
+  if (buffer->alloc < min)
+    return _ul_buffer_realloc_for_min (buffer, min);
+  return 0;
+}
+
 static inline int
 _ul_str_escape (const char *str, char *dest, size_t *length)
 {
@@ -123,31 +149,14 @@ _ul_str_escape (const char *str, char *dest, size_t *length)
   return 0;
 }
 
-static inline int
-_ul_buffer_ensure_size (ul_buffer_t *buffer, size_t size)
-{
-  if (buffer->alloc < size)
-    {
-      size_t new_alloc;
-      void *new_msg;
-
-      new_alloc = buffer->alloc + size * 2;
-      new_msg = realloc (buffer->msg, new_alloc);
-      if (new_msg == NULL)
-        return -1;
-      buffer->alloc = new_alloc;
-      buffer->msg = new_msg;
-    }
-  return 0;
-}
-
 int
 ul_buffer_reset (ul_buffer_t *buffer)
 {
-  if (_ul_buffer_ensure_size (buffer, 512) != 0)
+  buffer->len = 0;
+  if (_ul_buffer_reserve_size (buffer, 512) != 0)
     return -1;
-  buffer->len = 1;
   buffer->msg[0] = '{';
+  buffer->len = 1;
   return 0;
 }
 
@@ -159,12 +168,12 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 
   /* Append the key to the buffer */
   escape_buffer.len = 0;
-  if (_ul_buffer_ensure_size (&escape_buffer, strlen (key) * 6 + 1) != 0)
+  if (_ul_buffer_reserve_size (&escape_buffer, strlen (key) * 6 + 1) != 0)
     goto err;
   if (_ul_str_escape (key, escape_buffer.msg, &lk) != 0)
     goto err;
 
-  if (_ul_buffer_ensure_size (buffer, buffer->len + lk + 4) != 0)
+  if (_ul_buffer_reserve_size (buffer, lk + 4) != 0)
     goto err;
 
   memcpy (buffer->msg + buffer->len, "\"", 1);
@@ -173,12 +182,12 @@ ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 
   /* Append the value to the buffer */
   escape_buffer.len = 0;
-  if (_ul_buffer_ensure_size (&escape_buffer, strlen (value) * 6 + 1) != 0)
+  if (_ul_buffer_reserve_size (&escape_buffer, strlen (value) * 6 + 1) != 0)
     goto err;
   if (_ul_str_escape (value, escape_buffer.msg, &lv) != 0)
     goto err;
 
-  if (_ul_buffer_ensure_size (buffer, buffer->len + lk + lv + 6) != 0)
+  if (_ul_buffer_reserve_size (buffer, lk + lv + 6) != 0)
     goto err;
 
   memcpy (buffer->msg + buffer->len + 1 + lk + 3, escape_buffer.msg, lv);
@@ -197,13 +206,13 @@ ul_buffer_finalize (ul_buffer_t *buffer)
 {
   if (buffer->msg[buffer->len - 1] == ',')
     {
-      if (_ul_buffer_ensure_size (buffer, buffer->len + 1) != 0)
+      if (_ul_buffer_reserve_size (buffer, 1) != 0)
         return NULL;
       buffer->msg[buffer->len - 1] = '}';
     }
   else
     {
-      if (_ul_buffer_ensure_size (buffer, buffer->len + 2) != 0)
+      if (_ul_buffer_reserve_size (buffer, 2) != 0)
         return NULL;
       buffer->msg[buffer->len++] = '}';
     }
