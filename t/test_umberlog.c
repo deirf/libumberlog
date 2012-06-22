@@ -209,7 +209,7 @@ START_TEST (test_json_escape)
                    "control", "foo\nbar",
                    "utf8", "Árvíztűrő tükörfúrógép",
                    "junk", "\013foo",
-		   "all_control", control_chars,
+                   "all_control", control_chars,
                    NULL);
   jo = parse_msg (msg);
   free (msg);
