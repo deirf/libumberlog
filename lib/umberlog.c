@@ -264,7 +264,7 @@ _ul_vasprintf_and_advance (const char *fmt, va_list *pap)
   char *res;
 
   va_copy (aq, *pap);
-  if (vasprintf (&res, fmt, aq) == -1)
+  if (vasprintf (&res, fmt, aq) < 0)
     {
       va_end (aq);
       return NULL;
