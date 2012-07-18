@@ -49,14 +49,12 @@ static void (*old_syslog) ();
 static void (*old_vsyslog) ();
 static void (*old_openlog) ();
 static void (*old_closelog) ();
-static int (*old_setlogmask) ();
 
 static void ul_init (void) __attribute__((constructor));
 static void ul_finish (void) __attribute__((destructor));
 
 static __thread struct
 {
-  int mask;
   int flags;
 
   int facility;
@@ -77,7 +75,6 @@ ul_init (void)
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_closelog = dlsym (RTLD_NEXT, "closelog");
-  old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
 
 static void
@@ -90,7 +87,6 @@ void
 ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
-  ul_sys_settings.mask = old_setlogmask (0);
   ul_sys_settings.flags = option;
   ul_sys_settings.facility = facility;
   ul_sys_settings.pid = getpid ();
@@ -449,7 +445,7 @@ _ul_vsyslog (int format_version, int priority,
   const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
 
-  if (!(ul_sys_settings.mask & LOG_MASK (LOG_PRI (priority))))
+  if (!(setlogmask (0) & LOG_MASK (LOG_PRI (priority))))
     return 0;
 
   buffer = _ul_vformat (buffer, format_version, priority, msg_format, ap);
@@ -491,8 +487,8 @@ ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
     {
       ul_recurse = 1;
       _ul_vsyslog (0, priority, msg_format, ap);
-      ul_recurse = 0;
     }
+  ul_recurse = 0;
 }
 
 void
@@ -508,9 +504,7 @@ ul_legacy_syslog (int priority, const char *msg_format, ...)
 int
 ul_setlogmask (int mask)
 {
-  if (mask != 0)
-    ul_sys_settings.mask = mask;
-  return old_setlogmask (mask);
+  return setlogmask (mask);
 }
 
 #if HAVE___SYSLOG_CHK
@@ -544,6 +538,3 @@ void syslog (int priority, const char *msg_format, ...)
 #undef vsyslog
 void vsyslog (int priority, const char *msg_format, va_list ap)
   __attribute__((alias ("ul_legacy_vsyslog")));
-
-int setlogmask (int mask)
-  __attribute__((alias ("ul_setlogmask")));
