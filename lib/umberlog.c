@@ -254,10 +254,13 @@ _get_hostname (void)
   }
 
 static inline ul_buffer_t *
-_ul_json_vappend (ul_buffer_t *buffer, va_list ap)
+_ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
 {
+  va_list ap;
   char *key;
 
+  /* "&ap" may not be possible for function parameters, so make a copy. */
+  va_copy (ap, ap_orig);
   while ((key = (char *)va_arg (ap, char *)) != NULL)
     {
       char *fmt = (char *)va_arg (ap, char *);
@@ -268,23 +271,28 @@ _ul_json_vappend (ul_buffer_t *buffer, va_list ap)
       if (vasprintf (&value, fmt, aq) == -1)
         {
           va_end (aq);
-          return NULL;
+	  goto err;
         }
       va_end (aq);
 
       if (!value)
-        return NULL;
+        goto err;
 
       buffer = ul_buffer_append (buffer, key, value);
       free (value);
 
       if (buffer == NULL)
-	return NULL;
+	goto err;
 
       _ul_va_spin (fmt, ap);
     }
+  va_end (ap);
 
   return buffer;
+
+ err:
+  va_end (ap);
+  return NULL;
 }
 
 static inline ul_buffer_t *
@@ -343,29 +351,31 @@ _ul_discover (ul_buffer_t *buffer, int priority)
 static inline ul_buffer_t *
 _ul_vformat (ul_buffer_t *buffer, int format_version,
              int priority, const char *msg_format,
-             va_list ap)
+             va_list ap_orig)
 {
   char *value;
-  va_list aq;
+  va_list ap, aq;
 
+  /* "&ap" may not be possible for function parameters, so make a copy. */
+  va_copy (ap, ap_orig);
   va_copy (aq, ap);
   if (vasprintf (&value, msg_format, aq) == -1)
     {
       va_end (aq);
-      return NULL;
+      goto err;
     }
   va_end (aq);
   if (!value)
-    return NULL;
+    goto err;
 
   if (ul_buffer_reset (buffer) != 0)
-    return NULL;
+    goto err;
 
   buffer = ul_buffer_append (buffer, "msg", value);
   free (value);
 
   if (buffer == NULL)
-    return NULL;
+    goto err;
 
   _ul_va_spin (msg_format, ap);
 
@@ -373,9 +383,14 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
     buffer = _ul_json_vappend (buffer, ap);
 
   if (!buffer)
-    return NULL;
+    goto err;
 
+  va_end (ap);
   return _ul_discover (buffer, priority);
+
+ err:
+  va_end (ap);
+  return NULL;
 }
 
 static inline const char *
