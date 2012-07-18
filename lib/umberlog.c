@@ -254,6 +254,29 @@ _ul_va_spin (const char *fmt, va_list *pap)
     }
 }
 
+/* Return a newly allocated string.
+   On failure, NULL is returned and it is undefined what PAP points to. */
+static char *
+_ul_vasprintf_and_advance (const char *fmt, va_list *pap)
+{
+  va_list aq;
+  size_t i;
+  char *res;
+
+  va_copy (aq, *pap);
+  if (vasprintf (&res, fmt, aq) == -1)
+    {
+      va_end (aq);
+      return NULL;
+    }
+  va_end (aq);
+  if (res == NULL)
+    return NULL;
+
+  _ul_va_spin (fmt, pap);
+  return res;
+}
+
 static inline ul_buffer_t *
 _ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
 {
@@ -265,27 +288,16 @@ _ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
   while ((key = (char *)va_arg (ap, char *)) != NULL)
     {
       char *fmt = (char *)va_arg (ap, char *);
-      char *value = NULL;
-      va_list aq;
+      char *value;
 
-      va_copy (aq, ap);
-      if (vasprintf (&value, fmt, aq) == -1)
-        {
-          va_end (aq);
-	  goto err;
-        }
-      va_end (aq);
-
+      value = _ul_vasprintf_and_advance (fmt, &ap);
       if (!value)
         goto err;
-
       buffer = ul_buffer_append (buffer, key, value);
       free (value);
 
       if (buffer == NULL)
 	goto err;
-
-      _ul_va_spin (fmt, &ap);
     }
   va_end (ap);
 
@@ -359,13 +371,7 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
 
   /* "&ap" may not be possible for function parameters, so make a copy. */
   va_copy (ap, ap_orig);
-  va_copy (aq, ap);
-  if (vasprintf (&value, msg_format, aq) == -1)
-    {
-      va_end (aq);
-      goto err;
-    }
-  va_end (aq);
+  value = _ul_vasprintf_and_advance (msg_format, &ap);
   if (!value)
     goto err;
 
@@ -377,8 +383,6 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
 
   if (buffer == NULL)
     goto err;
-
-  _ul_va_spin (msg_format, &ap);
 
   if (format_version > 0)
     buffer = _ul_json_vappend (buffer, ap);
