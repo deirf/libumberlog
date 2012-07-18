@@ -491,8 +491,8 @@ ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
     {
       ul_recurse = 1;
       _ul_vsyslog (0, priority, msg_format, ap);
+      ul_recurse = 0;
     }
-  ul_recurse = 0;
 }
 
 void
