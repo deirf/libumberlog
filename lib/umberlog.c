@@ -371,13 +371,12 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
 
   /* "&ap" may not be possible for function parameters, so make a copy. */
   va_copy (ap, ap_orig);
-  value = _ul_vasprintf_and_advance (msg_format, &ap);
-  if (!value)
-    goto err;
-
   if (ul_buffer_reset (buffer) != 0)
     goto err;
 
+  value = _ul_vasprintf_and_advance (msg_format, &ap);
+  if (!value)
+    goto err;
   buffer = ul_buffer_append (buffer, "msg", value);
   free (value);
 
