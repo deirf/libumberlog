@@ -179,79 +179,80 @@ _get_hostname (void)
   return ul_sys_settings.hostname;
 }
 
-#define _ul_va_spin(fmt,ap)                             \
-  {                                                     \
-    size_t i;                                           \
-                                                        \
-    for (i = 0; i < strlen (fmt); i++)                  \
-      {                                                 \
-        int eof = 0;                                    \
-                                                        \
-        if (fmt[i] != '%')                              \
-          continue;                                     \
-        i++;                                            \
-        while (eof != 1)                                \
-          {                                             \
-            switch (fmt[i])                             \
-              {                                         \
-              case 'd':                                 \
-              case 'i':                                 \
-              case 'o':                                 \
-              case 'u':                                 \
-              case 'x':                                 \
-              case 'X':                                 \
-                if (fmt[i - 1] == 'l')                  \
-                  {                                     \
-                    if (i - 2 > 0 && fmt[i - 2] == 'l') \
-                      (void)va_arg (ap, long long int); \
-                    else                                \
-                      (void)va_arg (ap, long int);      \
-                  }                                     \
-                else                                    \
-                  (void)va_arg (ap, int);               \
-                eof = 1;                                \
-                break;                                  \
-              case 'e':                                 \
-              case 'E':                                 \
-              case 'f':                                 \
-              case 'F':                                 \
-              case 'g':                                 \
-              case 'G':                                 \
-              case 'a':                                 \
-              case 'A':                                 \
-                if (fmt[i - 1] == 'L')                  \
-                  (void)va_arg (ap, long double);       \
-                else                                    \
-                  (void)va_arg (ap, double);            \
-                eof = 1;                                \
-                break;                                  \
-              case 'c':                                 \
-                if (fmt [i - 1] == 'l')                 \
-                  (void)va_arg (ap, wint_t);            \
-                else                                    \
-                  (void)va_arg (ap, int);               \
-                eof = 1;                                \
-                break;                                  \
-              case 's':                                 \
-                if (fmt [i - 1] == 'l')                 \
-                  (void)va_arg (ap, wchar_t *);         \
-                else                                    \
-                  (void)va_arg (ap, char *);            \
-                eof = 1;                                \
-                break;                                  \
-              case 'p':                                 \
-                (void)va_arg (ap, void *);              \
-                eof = 1;                                \
-                break;                                  \
-              case '%':                                 \
-                eof = 1;                                \
-                break;                                  \
-              default:                                  \
-                i++;                                    \
-              }                                         \
-          }                                             \
-      }                                                 \
-  }
+static void
+_ul_va_spin (const char *fmt, va_list *pap)
+{
+  size_t i;
+
+  for (i = 0; i < strlen (fmt); i++)
+    {
+      int eof = 0;
+
+      if (fmt[i] != '%')
+	continue;
+      i++;
+      while (eof != 1)
+	{
+	  switch (fmt[i])
+	    {
+	    case 'd':
+	    case 'i':
+	    case 'o':
+	    case 'u':
+	    case 'x':
+	    case 'X':
+	      if (fmt[i - 1] == 'l')
+		{
+		  if (i - 2 > 0 && fmt[i - 2] == 'l')
+		    (void)va_arg (*pap, long long int);
+		  else
+		    (void)va_arg (*pap, long int);
+		}
+	      else
+		(void)va_arg (*pap, int);
+	      eof = 1;
+	      break;
+	    case 'e':
+	    case 'E':
+	    case 'f':
+	    case 'F':
+	    case 'g':
+	    case 'G':
+	    case 'a':
+	    case 'A':
+	      if (fmt[i - 1] == 'L')
+		(void)va_arg (*pap, long double);
+	      else
+		(void)va_arg (*pap, double);
+	      eof = 1;
+	      break;
+	    case 'c':
+	      if (fmt [i - 1] == 'l')
+		(void)va_arg (*pap, wint_t);
+	      else
+		(void)va_arg (*pap, int);
+	      eof = 1;
+	      break;
+	    case 's':
+	      if (fmt [i - 1] == 'l')
+		(void)va_arg (*pap, wchar_t *);
+	      else
+		(void)va_arg (*pap, char *);
+	      eof = 1;
+	      break;
+	    case 'p':
+	      (void)va_arg (*pap, void *);
+	      eof = 1;
+	      break;
+	    case '%':
+	      eof = 1;
+	      break;
+	    default:
+	      i++;
+	    }
+	}
+    }
+}
 
 static inline ul_buffer_t *
 _ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
@@ -284,7 +285,7 @@ _ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
       if (buffer == NULL)
 	goto err;
 
-      _ul_va_spin (fmt, ap);
+      _ul_va_spin (fmt, &ap);
     }
   va_end (ap);
 
@@ -377,7 +378,7 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
   if (buffer == NULL)
     goto err;
 
-  _ul_va_spin (msg_format, ap);
+  _ul_va_spin (msg_format, &ap);
 
   if (format_version > 0)
     buffer = _ul_json_vappend (buffer, ap);
