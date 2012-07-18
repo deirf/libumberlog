@@ -276,14 +276,10 @@ _ul_json_vappend (ul_buffer_t *buffer, va_list ap)
         return NULL;
 
       buffer = ul_buffer_append (buffer, key, value);
+      free (value);
 
       if (buffer == NULL)
-        {
-          free (value);
-          return NULL;
-        }
-
-      free (value);
+	return NULL;
 
       _ul_va_spin (fmt, ap);
     }
@@ -366,13 +362,10 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
     return NULL;
 
   buffer = ul_buffer_append (buffer, "msg", value);
-  if (buffer == NULL)
-    {
-      free (value);
-      return NULL;
-    }
-
   free (value);
+
+  if (buffer == NULL)
+    return NULL;
 
   _ul_va_spin (msg_format, ap);
 
