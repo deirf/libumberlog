@@ -7,7 +7,7 @@ CEE-enhanced syslog message generation
 --------------------------------------
 
 :Author: Gergely Nagy <algernon@balabit.hu>
-:Date: 2012-04-28
+:Date: 2012-07-19
 :Manual section: 3
 :Manual group: CEE-enhanced syslog Manual
 
@@ -57,8 +57,10 @@ the emitted message. After the *msg_format* format string, and any
 other parameters it refers to, there must be a NULL-terminated list of
 *key*, *value format*, *format parameters*. Each of these pairs,
 constructed from the *key* and the **printf(3)**-style *value format*
-will be added to the generated message.  Note that position specifiers
-(e.g. **%2$**) are not currently supported.
+will be added to the generated message.
+
+Note that user-defined printf types defined by
+**register_printf_type()** are not supported.
 
 **ul_format()** and **ul_vformat()** do the same as the syslog
 variants above, except the formatted payload is not sent to syslog,

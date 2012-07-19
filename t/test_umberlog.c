@@ -1,6 +1,7 @@
 #define _GNU_SOURCE 1
 
 #include "umberlog.h"
+#include "config.h"
 #include <json.h>
 #include <assert.h>
 #include <string.h>
@@ -262,6 +263,37 @@ START_TEST (test_closelog)
 }
 END_TEST
 
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+START_TEST (test_positional_params)
+{
+  char *msg;
+  struct json_object *jo;
+
+  openlog ("umberlog/test_positional_params", LOG_UL_NOTIME, LOG_LOCAL0);
+
+#define COMPLEX_FORMAT \
+  "%3$*5$.*2$hhd , %1$Lf , %4$.3s , %4$s", 1.0L, 5, (char)100, "prefix", -8
+#define COMPLEX_RESULT "00100    , 1.000000 , pre , prefix"
+  msg = ul_format (LOG_DEBUG, COMPLEX_FORMAT,
+                   "simple1", "value1",
+                   "complex", COMPLEX_FORMAT,
+                   "simple2", "value2",
+                   NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "msg", COMPLEX_RESULT);
+  verify_value (jo, "simple1", "value1");
+  verify_value (jo, "complex", COMPLEX_RESULT);
+  verify_value (jo, "simple2", "value2");
+
+  json_object_put (jo);
+
+  closelog ();
+}
+END_TEST
+#endif
+
 int
 main (void)
 {
@@ -278,6 +310,9 @@ main (void)
   tcase_add_test (ft, test_additional_fields);
   tcase_add_test (ft, test_discover_priority);
   tcase_add_test (ft, test_no_timestamp);
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+  tcase_add_test (ft, test_positional_params);
+#endif
   suite_add_tcase (s, ft);
 
   bt = tcase_create ("Bug tests");

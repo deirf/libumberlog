@@ -40,7 +40,7 @@ AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h wchar.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-AC_CHECK_FUNCS([gethostname strdup memset __syslog_chk])
+AC_CHECK_FUNCS([gethostname strdup memset __syslog_chk parse_printf_format])
 
 dnl The dlopen() function is in the C library for *BSD and in
 dnl libdl on GLIBC-based systems

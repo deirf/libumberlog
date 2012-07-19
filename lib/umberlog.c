@@ -28,6 +28,7 @@
 #define _GNU_SOURCE 1
 #define SYSLOG_NAMES 1
 
+#include "config.h"
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -42,8 +43,10 @@
 #include <time.h>
 #include <errno.h>
 #include <wchar.h>
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+#include <printf.h>
+#endif
 
-#include "config.h"
 #include "umberlog.h"
 #include "buffer.h"
 
@@ -177,8 +180,88 @@ _get_hostname (void)
   return ul_sys_settings.hostname;
 }
 
-static void
-_ul_va_spin (const char *fmt, va_list *pap)
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+
+#define _ul_va_spin _ul_va_spin_glibc
+
+static int
+_ul_va_spin_glibc (const char *fmt, va_list *pap)
+{
+  size_t num_args, i;
+  int *types;
+
+  num_args = parse_printf_format (fmt, 0, NULL);
+  types = malloc (num_args * sizeof (*types));
+  if (types == NULL)
+    goto err;
+  if (parse_printf_format (fmt, num_args, types) != num_args)
+    goto err; /* Should never happen */
+
+  for (i = 0; i < num_args; i++)
+    {
+      switch (types[i])
+        {
+        case PA_CHAR:
+        case PA_INT | PA_FLAG_SHORT:
+        case PA_INT:
+          (void)va_arg (*pap, int);
+          break;
+        case PA_INT | PA_FLAG_LONG:
+          (void)va_arg (*pap, long int);
+          break;
+        case PA_INT | PA_FLAG_LONG_LONG:
+          (void)va_arg (*pap, long long int);
+          break;
+
+        case PA_WCHAR:
+          (void)va_arg (*pap, wint_t);
+          break;
+
+        case PA_STRING:
+          (void)va_arg (*pap, char *);
+          break;
+
+        case PA_WSTRING:
+          (void)va_arg (*pap, wchar_t *);
+          break;
+
+        case PA_POINTER:
+          (void)va_arg (*pap, void *);
+          break;
+
+        case PA_FLOAT:
+        case PA_DOUBLE:
+          (void)va_arg (*pap, double);
+          break;
+        case PA_DOUBLE | PA_FLAG_LONG_DOUBLE:
+          (void)va_arg (*pap, long double);
+          break;
+
+        default:
+          if ((types[i] & PA_FLAG_PTR) != 0)
+            {
+              (void)va_arg (*pap, void *);
+              break;
+            }
+          /* Unknown user-defined parameter type.  Can we log that this
+             happened? */
+          goto err;
+        }
+    }
+
+  free (types);
+  return 0;
+
+ err:
+  free (types);
+  return -1;
+}
+#else /* !HAVE_PARSE_PRINTF_FORMAT */
+
+#define _ul_va_spin _ul_va_spin_legacy
+
+static int
+_ul_va_spin_legacy (const char *fmt, va_list *pap)
 {
   size_t i;
 
@@ -293,7 +376,9 @@ _ul_va_spin (const char *fmt, va_list *pap)
             }
         }
     }
+  return 0;
 }
+#endif /* !HAVE_PARSE_PRINTF_FORMAT */
 
 /* Return a newly allocated string.
    On failure, NULL is returned and it is undefined what PAP points to. */
@@ -314,7 +399,11 @@ _ul_vasprintf_and_advance (const char *fmt, va_list *pap)
   if (res == NULL)
     return NULL;
 
-  _ul_va_spin (fmt, pap);
+  if (_ul_va_spin (fmt, pap) != 0)
+    {
+      free (res);
+      return NULL;
+    }
   return res;
 }
 
