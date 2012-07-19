@@ -187,111 +187,111 @@ _ul_va_spin (const char *fmt, va_list *pap)
       int eof = 0;
 
       if (fmt[i] != '%')
-	continue;
+        continue;
       i++;
       while (eof != 1)
-	{
-	  switch (fmt[i])
-	    {
-	    case 'd':
-	    case 'i':
-	    case 'o':
-	    case 'u':
-	    case 'x':
-	    case 'X':
-	      if (fmt[i - 1] == 'l')
-		{
-		  if (i - 2 > 0 && fmt[i - 2] == 'l')
-		    (void)va_arg (*pap, long long int);
-		  else
-		    (void)va_arg (*pap, long int);
-		}
-	      else if (fmt[i - 1] == 'j')
-		(void)va_arg (*pap, intmax_t);
-	      else if (fmt[i - 1] == 'z')
-		(void)va_arg (*pap, ssize_t);
-	      else if (fmt[i - 1] == 't')
-		(void)va_arg (*pap, ptrdiff_t);
-	      else /* Also handles h, hh */
-		(void)va_arg (*pap, int);
-	      eof = 1;
-	      break;
-	    case 'e':
-	    case 'E':
-	    case 'f':
-	    case 'F':
-	    case 'g':
-	    case 'G':
-	    case 'a':
-	    case 'A':
-	      if (fmt[i - 1] == 'L')
-		(void)va_arg (*pap, long double);
-	      else
-		(void)va_arg (*pap, double);
-	      eof = 1;
-	      break;
-	    case 'c':
-	      if (fmt [i - 1] == 'l')
-		(void)va_arg (*pap, wint_t);
-	      else
-		(void)va_arg (*pap, int);
-	      eof = 1;
-	      break;
-	    case 'C':
-	      (void)va_arg (*pap, wint_t);
-	      eof = 1;
-	      break;
-	    case 's':
-	      if (fmt [i - 1] == 'l')
-		(void)va_arg (*pap, wchar_t *);
-	      else
-		(void)va_arg (*pap, char *);
-	      eof = 1;
-	      break;
-	    case 'S':
-	      (void)va_arg (*pap, wchar_t *);
-	      eof = 1;
-	      break;
-	    case 'p':
-	      (void)va_arg (*pap, void *);
-	      eof = 1;
-	      break;
-	    case 'n':
-	      if (fmt[i - 1] == 'l')
-		{
-		  if (i - 2 > 0 && fmt[i - 2] == 'l')
-		    (void)va_arg (*pap, long long *);
-		  else
-		    (void)va_arg (*pap, long int *);
-		}
-	      else if (fmt[i - 1] == 'h')
-		{
-		  if (i - 2 > 0 && fmt[i - 2] == 'h')
-		    (void)va_arg (*pap, signed char *);
-		  else
-		    (void)va_arg (*pap, short int *);
-		}
-	      else if (fmt[i - 1] == 'j')
-		(void)va_arg (*pap, intmax_t *);
-	      else if (fmt[i - 1] == 'z')
-		(void)va_arg (*pap, ssize_t *);
-	      else if (fmt[i - 1] == 't')
-		(void)va_arg (*pap, ptrdiff_t *);
-	      else
-		(void)va_arg (*pap, int *);
-	      eof = 1;
-	      break;
-	    case '*':
-	      (void)va_arg (*pap, int);
-	      i++;
-	      break; /* eof stays set to 0 */
-	    case '%':
-	      eof = 1;
-	      break;
-	    default:
-	      i++;
-	    }
-	}
+        {
+          switch (fmt[i])
+            {
+            case 'd':
+            case 'i':
+            case 'o':
+            case 'u':
+            case 'x':
+            case 'X':
+              if (fmt[i - 1] == 'l')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'l')
+                    (void)va_arg (*pap, long long int);
+                  else
+                    (void)va_arg (*pap, long int);
+                }
+              else if (fmt[i - 1] == 'j')
+                (void)va_arg (*pap, intmax_t);
+              else if (fmt[i - 1] == 'z')
+                (void)va_arg (*pap, ssize_t);
+              else if (fmt[i - 1] == 't')
+                (void)va_arg (*pap, ptrdiff_t);
+              else /* Also handles h, hh */
+                (void)va_arg (*pap, int);
+              eof = 1;
+              break;
+            case 'e':
+            case 'E':
+            case 'f':
+            case 'F':
+            case 'g':
+            case 'G':
+            case 'a':
+            case 'A':
+              if (fmt[i - 1] == 'L')
+                (void)va_arg (*pap, long double);
+              else
+                (void)va_arg (*pap, double);
+              eof = 1;
+              break;
+            case 'c':
+              if (fmt [i - 1] == 'l')
+                (void)va_arg (*pap, wint_t);
+              else
+                (void)va_arg (*pap, int);
+              eof = 1;
+              break;
+            case 'C':
+              (void)va_arg (*pap, wint_t);
+              eof = 1;
+              break;
+            case 's':
+              if (fmt [i - 1] == 'l')
+                (void)va_arg (*pap, wchar_t *);
+              else
+                (void)va_arg (*pap, char *);
+              eof = 1;
+              break;
+            case 'S':
+              (void)va_arg (*pap, wchar_t *);
+              eof = 1;
+              break;
+            case 'p':
+              (void)va_arg (*pap, void *);
+              eof = 1;
+              break;
+            case 'n':
+              if (fmt[i - 1] == 'l')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'l')
+                    (void)va_arg (*pap, long long *);
+                  else
+                    (void)va_arg (*pap, long int *);
+                }
+              else if (fmt[i - 1] == 'h')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'h')
+                    (void)va_arg (*pap, signed char *);
+                  else
+                    (void)va_arg (*pap, short int *);
+                }
+              else if (fmt[i - 1] == 'j')
+                (void)va_arg (*pap, intmax_t *);
+              else if (fmt[i - 1] == 'z')
+                (void)va_arg (*pap, ssize_t *);
+              else if (fmt[i - 1] == 't')
+                (void)va_arg (*pap, ptrdiff_t *);
+              else
+                (void)va_arg (*pap, int *);
+              eof = 1;
+              break;
+            case '*':
+              (void)va_arg (*pap, int);
+              i++;
+              break; /* eof stays set to 0 */
+            case '%':
+              eof = 1;
+              break;
+            default:
+              i++;
+            }
+        }
     }
 }
 
@@ -338,7 +338,7 @@ _ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
       free (value);
 
       if (buffer == NULL)
-	goto err;
+        goto err;
     }
   va_end (ap);
 
