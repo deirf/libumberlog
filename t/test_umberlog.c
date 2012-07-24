@@ -257,6 +257,17 @@ START_TEST (test_closelog)
   jo = parse_msg (msg);
   free (msg);
 
+  verify_value_missing (jo, "facility");
+
+  json_object_put (jo);
+
+  openlog ("umberlog/test_closelog", 0, LOG_LOCAL0);
+  closelog ();
+
+  msg = ul_format (LOG_DEBUG, "%s", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
   verify_value (jo, "facility", "local0");
 #ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
   verify_value (jo, "program", "test_umberlog");
