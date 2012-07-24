@@ -107,12 +107,12 @@ ul_openlog (const char *ident, int option, int facility)
   ul_process_data.facility = facility;
   ul_process_data.ident = ident;
 
-  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0)
+  if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
     ul_process_data.pid = -1;
   else
     ul_process_data.pid = getpid ();
-  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0 ||
-      (ul_process_data.flags & LOG_UL_NOCACHE_UID) != 0)
+  if ((ul_process_data.flags &
+       (LOG_UL_NODISCOVER | LOG_UL_NOCACHE | LOG_UL_NOCACHE_UID)) != 0)
     {
       ul_process_data.gid = (gid_t)-1;
       ul_process_data.uid = (uid_t)-1;
@@ -122,7 +122,7 @@ ul_openlog (const char *ident, int option, int facility)
       ul_process_data.gid = getgid ();
       ul_process_data.uid = getuid ();
     }
-  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0)
+  if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
     ul_process_data.hostname[0] = '\0';
   else
     gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
