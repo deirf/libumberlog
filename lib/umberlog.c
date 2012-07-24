@@ -77,7 +77,7 @@ static struct
 } ul_process_data =
   {
     PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL,
-    -1, 0, 0, { 0, }
+    -1, (uid_t)-1, (gid_t)-1, { 0, }
   };
 
 static __thread ul_buffer_t ul_buffer;
@@ -134,8 +134,8 @@ ul_closelog (void)
   ul_process_data.ident = NULL;
 
   ul_process_data.pid = -1;
-  ul_process_data.gid = 0;
-  ul_process_data.uid = 0;
+  ul_process_data.gid = (gid_t)-1;
+  ul_process_data.uid = (uid_t)-1;
   ul_process_data.hostname[0] = '\0';
   pthread_mutex_unlock (&ul_process_data.lock);
 }
