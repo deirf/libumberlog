@@ -295,6 +295,7 @@ START_TEST (test_closelog)
     verify_value_differs (jo, "uid", "0");
   if (getgid () != 0)
     verify_value_differs (jo, "gid", "0");
+  verify_value_differs (jo, "host", "");
 
   json_object_put (jo);
 }
@@ -354,6 +355,7 @@ START_TEST (test_openlog_defaults)
     verify_value_differs (jo, "uid", "0");
   if (getgid () != 0)
     verify_value_differs (jo, "gid", "0");
+  verify_value_differs (jo, "host", "");
   json_object_put (jo);
 
   closelog ();

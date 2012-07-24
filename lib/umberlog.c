@@ -73,7 +73,7 @@ static struct
   pid_t pid;			/* -1 = no value cached */
   uid_t uid;			/* (uid_t)-1 = no value cached */
   gid_t gid;			/* (gid_t)-1 = no value cached */
-  char hostname[_POSIX_HOST_NAME_MAX + 1];
+  char hostname[_POSIX_HOST_NAME_MAX + 1]; /* "" = no value cached */
 } ul_process_data =
   {
     PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL,
@@ -122,7 +122,10 @@ ul_openlog (const char *ident, int option, int facility)
       ul_process_data.gid = getgid ();
       ul_process_data.uid = getuid ();
     }
-  gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0)
+    ul_process_data.hostname[0] = '\0';
+  else
+    gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
   pthread_mutex_unlock (&ul_process_data.lock);
 }
 
@@ -208,11 +211,13 @@ _get_gid (void)
 }
 
 static inline const char *
-_get_hostname (void)
+_get_hostname (char *hostname_buffer)
 {
-  if (ul_process_data.flags & LOG_UL_NOCACHE)
-    gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
-  return ul_process_data.hostname;
+  if (ul_process_data.hostname[0] != '\0')
+    return ul_process_data.hostname;
+
+  gethostname (hostname_buffer, _POSIX_HOST_NAME_MAX);
+  return hostname_buffer;
 }
 
 static inline const char *
@@ -520,6 +525,7 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
 static inline ul_buffer_t *
 _ul_discover (ul_buffer_t *buffer, int priority)
 {
+  char hostname_buffer[_POSIX_HOST_NAME_MAX + 1];
   const char *ident;
 
   if (ul_process_data.flags & LOG_UL_NODISCOVER)
@@ -531,7 +537,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
                             "priority", "%s", _find_prio (priority),
                             "uid", "%d", _get_uid (),
                             "gid", "%d", _get_gid (),
-                            "host", "%s", _get_hostname (),
+                            "host", "%s", _get_hostname (hostname_buffer),
                             NULL);
   if (buffer == NULL)
     return buffer;
