@@ -68,7 +68,7 @@ static __thread struct
   gid_t gid;
   const char *ident;
   char hostname[_POSIX_HOST_NAME_MAX + 1];
-} ul_sys_settings;
+} ul_thread_data;
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -92,21 +92,21 @@ void
 ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
-  ul_sys_settings.flags = option;
-  ul_sys_settings.facility = facility;
-  ul_sys_settings.pid = getpid ();
-  ul_sys_settings.gid = getgid ();
-  ul_sys_settings.uid = getuid ();
-  ul_sys_settings.ident = ident;
+  ul_thread_data.flags = option;
+  ul_thread_data.facility = facility;
+  ul_thread_data.pid = getpid ();
+  ul_thread_data.gid = getgid ();
+  ul_thread_data.uid = getuid ();
+  ul_thread_data.ident = ident;
 
-  gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
+  gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
 }
 
 void
 ul_closelog (void)
 {
   old_closelog ();
-  memset (&ul_sys_settings, 0, sizeof (ul_sys_settings));
+  memset (&ul_thread_data, 0, sizeof (ul_thread_data));
 }
 
 /** HELPERS **/
@@ -117,7 +117,7 @@ _find_facility (int prio)
   int fac = prio & LOG_FACMASK;
 
   if (fac == 0)
-    fac = ul_sys_settings.facility;
+    fac = ul_thread_data.facility;
 
   while (facilitynames[i].c_name != NULL &&
          facilitynames[i].c_val != fac)
@@ -146,38 +146,38 @@ _find_prio (int prio)
 static inline pid_t
 _find_pid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
+  if (ul_thread_data.flags & LOG_UL_NOCACHE)
     return getpid ();
   else
-    return ul_sys_settings.pid;
+    return ul_thread_data.pid;
 }
 
 static inline uid_t
 _get_uid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
-      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
+  if (ul_thread_data.flags & LOG_UL_NOCACHE ||
+      ul_thread_data.flags & LOG_UL_NOCACHE_UID)
     return getuid ();
   else
-    return ul_sys_settings.uid;
+    return ul_thread_data.uid;
 }
 
 static inline uid_t
 _get_gid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
-      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
+  if (ul_thread_data.flags & LOG_UL_NOCACHE ||
+      ul_thread_data.flags & LOG_UL_NOCACHE_UID)
     return getgid ();
   else
-    return ul_sys_settings.gid;
+    return ul_thread_data.gid;
 }
 
 static inline const char *
 _get_hostname (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
-    gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
-  return ul_sys_settings.hostname;
+  if (ul_thread_data.flags & LOG_UL_NOCACHE)
+    gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
+  return ul_thread_data.hostname;
 }
 
 #ifdef HAVE_PARSE_PRINTF_FORMAT
@@ -472,20 +472,20 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
 static inline ul_buffer_t *
 _ul_discover (ul_buffer_t *buffer, int priority)
 {
-  if (ul_sys_settings.flags & LOG_UL_NODISCOVER)
+  if (ul_thread_data.flags & LOG_UL_NODISCOVER)
     return buffer;
 
   buffer = _ul_json_append (buffer,
                             "pid", "%d", _find_pid (),
                             "facility", "%s", _find_facility (priority),
                             "priority", "%s", _find_prio (priority),
-                            "program", "%s", ul_sys_settings.ident,
+                            "program", "%s", ul_thread_data.ident,
                             "uid", "%d", _get_uid (),
                             "gid", "%d", _get_gid (),
                             "host", "%s", _get_hostname (),
                             NULL);
 
-  if (ul_sys_settings.flags & LOG_UL_NOTIME || !buffer)
+  if (ul_thread_data.flags & LOG_UL_NOTIME || !buffer)
     return buffer;
 
   return _ul_json_append_timestamp (buffer);
