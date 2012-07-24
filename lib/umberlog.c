@@ -76,7 +76,7 @@ static struct
      the BSD syslog does the same thing). */
   pthread_mutex_t lock;
   int facility;
-} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, 0 };
+} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, LOG_USER };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -118,7 +118,7 @@ ul_closelog (void)
   old_closelog ();
   memset (&ul_thread_data, 0, sizeof (ul_thread_data));
   pthread_mutex_lock (&ul_process_data.lock);
-  ul_process_data.facility = 0;
+  ul_process_data.facility = LOG_USER;
   pthread_mutex_unlock (&ul_process_data.lock);
 }
 

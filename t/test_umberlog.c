@@ -294,6 +294,25 @@ START_TEST (test_positional_params)
 END_TEST
 #endif
 
+/* This must be the first test! */
+START_TEST (test_openlog_defaults)
+{
+  char *msg;
+  struct json_object *jo;
+
+  /* No openlog */
+
+  msg = ul_format (LOG_ALERT, "message", NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  verify_value (jo, "facility", "user");
+  json_object_put (jo);
+
+  closelog ();
+}
+END_TEST
+
 int
 main (void)
 {
@@ -305,6 +324,7 @@ main (void)
   s = suite_create ("Umberlog functional testsuite");
 
   ft = tcase_create ("Basic tests");
+  tcase_add_test (ft, test_openlog_defaults);
   tcase_add_test (ft, test_simple);
   tcase_add_test (ft, test_no_discover);
   tcase_add_test (ft, test_additional_fields);
