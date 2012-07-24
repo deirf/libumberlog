@@ -186,7 +186,7 @@ _get_uid (void)
     return ul_process_data.uid;
 }
 
-static inline uid_t
+static inline gid_t
 _get_gid (void)
 {
   if (ul_process_data.flags & LOG_UL_NOCACHE ||
