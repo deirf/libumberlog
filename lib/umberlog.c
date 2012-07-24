@@ -61,8 +61,6 @@ static void ul_finish (void) __attribute__((destructor));
 
 static __thread struct
 {
-  int flags;
-
   pid_t pid;
   uid_t uid;
   gid_t gid;
@@ -74,9 +72,10 @@ static struct
      even when racing with writes, note that POSIX does not guarantee this (but
      the BSD syslog does the same thing). */
   pthread_mutex_t lock;
+  int flags;
   int facility;
   const char *ident;
-} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, LOG_USER, NULL };
+} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -100,8 +99,8 @@ void
 ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
-  ul_thread_data.flags = option;
   pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.flags = option;
   ul_process_data.facility = facility;
   ul_process_data.ident = ident;
   pthread_mutex_unlock (&ul_process_data.lock);
@@ -118,6 +117,7 @@ ul_closelog (void)
   old_closelog ();
   memset (&ul_thread_data, 0, sizeof (ul_thread_data));
   pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.flags = 0;
   ul_process_data.ident = NULL;
   pthread_mutex_unlock (&ul_process_data.lock);
 }
@@ -159,7 +159,7 @@ _find_prio (int prio)
 static inline pid_t
 _find_pid (void)
 {
-  if (ul_thread_data.flags & LOG_UL_NOCACHE)
+  if (ul_process_data.flags & LOG_UL_NOCACHE)
     return getpid ();
   else
     return ul_thread_data.pid;
@@ -168,8 +168,8 @@ _find_pid (void)
 static inline uid_t
 _get_uid (void)
 {
-  if (ul_thread_data.flags & LOG_UL_NOCACHE ||
-      ul_thread_data.flags & LOG_UL_NOCACHE_UID)
+  if (ul_process_data.flags & LOG_UL_NOCACHE ||
+      ul_process_data.flags & LOG_UL_NOCACHE_UID)
     return getuid ();
   else
     return ul_thread_data.uid;
@@ -178,8 +178,8 @@ _get_uid (void)
 static inline uid_t
 _get_gid (void)
 {
-  if (ul_thread_data.flags & LOG_UL_NOCACHE ||
-      ul_thread_data.flags & LOG_UL_NOCACHE_UID)
+  if (ul_process_data.flags & LOG_UL_NOCACHE ||
+      ul_process_data.flags & LOG_UL_NOCACHE_UID)
     return getgid ();
   else
     return ul_thread_data.gid;
@@ -188,7 +188,7 @@ _get_gid (void)
 static inline const char *
 _get_hostname (void)
 {
-  if (ul_thread_data.flags & LOG_UL_NOCACHE)
+  if (ul_process_data.flags & LOG_UL_NOCACHE)
     gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
   return ul_thread_data.hostname;
 }
@@ -500,7 +500,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
 {
   const char *ident;
 
-  if (ul_thread_data.flags & LOG_UL_NODISCOVER)
+  if (ul_process_data.flags & LOG_UL_NODISCOVER)
     return buffer;
 
   buffer = _ul_json_append (buffer,
@@ -518,7 +518,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
   if (ident != NULL)
     buffer = _ul_json_append (buffer, "program", "%s", ident, NULL);
 
-  if (ul_thread_data.flags & LOG_UL_NOTIME || !buffer)
+  if (ul_process_data.flags & LOG_UL_NOTIME || !buffer)
     return buffer;
 
   return _ul_json_append_timestamp (buffer);
