@@ -258,7 +258,11 @@ START_TEST (test_closelog)
   free (msg);
 
   verify_value (jo, "facility", "local0");
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+  verify_value (jo, "program", "test_umberlog");
+#else
   verify_value_missing (jo, "program");
+#endif
 
   json_object_put (jo);
 }
@@ -308,7 +312,11 @@ START_TEST (test_openlog_defaults)
   free (msg);
 
   verify_value (jo, "facility", "user");
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+  verify_value (jo, "program", "test_umberlog");
+#else
   verify_value_missing (jo, "program");
+#endif
   json_object_put (jo);
 
   closelog ();

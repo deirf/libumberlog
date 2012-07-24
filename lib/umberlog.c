@@ -193,6 +193,19 @@ _get_hostname (void)
   return ul_thread_data.hostname;
 }
 
+static inline const char *
+_get_ident (void)
+{
+  const char *ident;
+
+  ident = ul_process_data.ident;
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+  if (ident == NULL)
+    ident = program_invocation_short_name;
+#endif
+  return ident;
+}
+
 #ifdef HAVE_PARSE_PRINTF_FORMAT
 
 #define _ul_va_spin _ul_va_spin_glibc
@@ -485,6 +498,8 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
 static inline ul_buffer_t *
 _ul_discover (ul_buffer_t *buffer, int priority)
 {
+  const char *ident;
+
   if (ul_thread_data.flags & LOG_UL_NODISCOVER)
     return buffer;
 
@@ -499,9 +514,9 @@ _ul_discover (ul_buffer_t *buffer, int priority)
   if (buffer == NULL)
     return buffer;
 
-  if (ul_process_data.ident != NULL)
-    buffer = _ul_json_append (buffer, "program", "%s", ul_process_data.ident,
-			      NULL);
+  ident = _get_ident ();
+  if (ident != NULL)
+    buffer = _ul_json_append (buffer, "program", "%s", ident, NULL);
 
   if (ul_thread_data.flags & LOG_UL_NOTIME || !buffer)
     return buffer;
