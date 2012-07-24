@@ -69,7 +69,8 @@ static struct
   int facility;
   const char *ident;
 
-  pid_t pid;
+  /* Cached data */
+  pid_t pid;			/* -1 = no value cached */
   uid_t uid;
   gid_t gid;
   char hostname[_POSIX_HOST_NAME_MAX + 1];
@@ -106,7 +107,10 @@ ul_openlog (const char *ident, int option, int facility)
   ul_process_data.facility = facility;
   ul_process_data.ident = ident;
 
-  ul_process_data.pid = getpid ();
+  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0)
+    ul_process_data.pid = -1;
+  else
+    ul_process_data.pid = getpid ();
   ul_process_data.gid = getgid ();
   ul_process_data.uid = getuid ();
   gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
@@ -164,10 +168,12 @@ _find_prio (int prio)
 static inline pid_t
 _find_pid (void)
 {
-  if (ul_process_data.flags & LOG_UL_NOCACHE)
-    return getpid ();
-  else
-    return ul_process_data.pid;
+  pid_t pid;
+
+  pid = ul_process_data.pid;
+  if (pid == -1)
+    pid = getpid ();
+  return pid;
 }
 
 static inline uid_t
