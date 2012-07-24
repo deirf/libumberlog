@@ -59,13 +59,6 @@ static void (*old_closelog) ();
 static void ul_init (void) __attribute__((constructor));
 static void ul_finish (void) __attribute__((destructor));
 
-static __thread struct
-{
-  pid_t pid;
-  uid_t uid;
-  gid_t gid;
-  char hostname[_POSIX_HOST_NAME_MAX + 1];
-} ul_thread_data;
 static struct
 {
   /* The lock is used only to serialize writes; we assume that reads are safe
@@ -75,7 +68,16 @@ static struct
   int flags;
   int facility;
   const char *ident;
-} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL };
+
+  pid_t pid;
+  uid_t uid;
+  gid_t gid;
+  char hostname[_POSIX_HOST_NAME_MAX + 1];
+} ul_process_data =
+  {
+    PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL,
+    0, 0, 0, { 0, }
+  };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -103,21 +105,25 @@ ul_openlog (const char *ident, int option, int facility)
   ul_process_data.flags = option;
   ul_process_data.facility = facility;
   ul_process_data.ident = ident;
-  pthread_mutex_unlock (&ul_process_data.lock);
-  ul_thread_data.pid = getpid ();
-  ul_thread_data.gid = getgid ();
-  ul_thread_data.uid = getuid ();
 
-  gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
+  ul_process_data.pid = getpid ();
+  ul_process_data.gid = getgid ();
+  ul_process_data.uid = getuid ();
+  gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 void
 ul_closelog (void)
 {
   old_closelog ();
-  memset (&ul_thread_data, 0, sizeof (ul_thread_data));
   pthread_mutex_lock (&ul_process_data.lock);
   ul_process_data.ident = NULL;
+
+  ul_process_data.pid = 0;
+  ul_process_data.gid = 0;
+  ul_process_data.uid = 0;
+  ul_process_data.hostname[0] = '\0';
   pthread_mutex_unlock (&ul_process_data.lock);
 }
 
@@ -161,7 +167,7 @@ _find_pid (void)
   if (ul_process_data.flags & LOG_UL_NOCACHE)
     return getpid ();
   else
-    return ul_thread_data.pid;
+    return ul_process_data.pid;
 }
 
 static inline uid_t
@@ -171,7 +177,7 @@ _get_uid (void)
       ul_process_data.flags & LOG_UL_NOCACHE_UID)
     return getuid ();
   else
-    return ul_thread_data.uid;
+    return ul_process_data.uid;
 }
 
 static inline uid_t
@@ -181,15 +187,15 @@ _get_gid (void)
       ul_process_data.flags & LOG_UL_NOCACHE_UID)
     return getgid ();
   else
-    return ul_thread_data.gid;
+    return ul_process_data.gid;
 }
 
 static inline const char *
 _get_hostname (void)
 {
   if (ul_process_data.flags & LOG_UL_NOCACHE)
-    gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
-  return ul_thread_data.hostname;
+    gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+  return ul_process_data.hostname;
 }
 
 static inline const char *
