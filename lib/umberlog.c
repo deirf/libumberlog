@@ -117,9 +117,6 @@ ul_closelog (void)
 {
   old_closelog ();
   memset (&ul_thread_data, 0, sizeof (ul_thread_data));
-  pthread_mutex_lock (&ul_process_data.lock);
-  ul_process_data.facility = LOG_USER;
-  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 /** HELPERS **/
