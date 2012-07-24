@@ -30,6 +30,22 @@ verify_value (struct json_object *jo, const char *key,
 }
 
 static void
+verify_value_differs (struct json_object *jo, const char *key,
+		      const char *unexpected_value)
+{
+  struct json_object *o;
+  const char *value;
+
+  o = json_object_object_get (jo, key);
+
+  ck_assert (o != NULL);
+
+  value = json_object_get_string (o);
+
+  ck_assert_str_ne (value, unexpected_value);
+}
+
+static void
 verify_value_exists (struct json_object *jo, const char *key)
 {
   struct json_object *o;
@@ -274,6 +290,7 @@ START_TEST (test_closelog)
 #else
   verify_value_missing (jo, "program");
 #endif
+  verify_value_differs (jo, "pid", "0");
 
   json_object_put (jo);
 }
@@ -328,6 +345,7 @@ START_TEST (test_openlog_defaults)
 #else
   verify_value_missing (jo, "program");
 #endif
+  verify_value_differs (jo, "pid", "0");
   json_object_put (jo);
 
   closelog ();
