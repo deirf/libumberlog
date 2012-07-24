@@ -71,8 +71,8 @@ static struct
 
   /* Cached data */
   pid_t pid;			/* -1 = no value cached */
-  uid_t uid;
-  gid_t gid;
+  uid_t uid;			/* (uid_t)-1 = no value cached */
+  gid_t gid;			/* (gid_t)-1 = no value cached */
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_process_data =
   {
@@ -111,8 +111,17 @@ ul_openlog (const char *ident, int option, int facility)
     ul_process_data.pid = -1;
   else
     ul_process_data.pid = getpid ();
-  ul_process_data.gid = getgid ();
-  ul_process_data.uid = getuid ();
+  if ((ul_process_data.flags & LOG_UL_NOCACHE) != 0 ||
+      (ul_process_data.flags & LOG_UL_NOCACHE_UID) != 0)
+    {
+      ul_process_data.gid = (gid_t)-1;
+      ul_process_data.uid = (uid_t)-1;
+    }
+  else
+    {
+      ul_process_data.gid = getgid ();
+      ul_process_data.uid = getuid ();
+    }
   gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
   pthread_mutex_unlock (&ul_process_data.lock);
 }
@@ -179,21 +188,23 @@ _find_pid (void)
 static inline uid_t
 _get_uid (void)
 {
-  if (ul_process_data.flags & LOG_UL_NOCACHE ||
-      ul_process_data.flags & LOG_UL_NOCACHE_UID)
-    return getuid ();
-  else
-    return ul_process_data.uid;
+  uid_t uid;
+
+  uid = ul_process_data.uid;
+  if (uid == (uid_t)-1)
+    uid = getuid ();
+  return uid;
 }
 
 static inline gid_t
 _get_gid (void)
 {
-  if (ul_process_data.flags & LOG_UL_NOCACHE ||
-      ul_process_data.flags & LOG_UL_NOCACHE_UID)
-    return getgid ();
-  else
-    return ul_process_data.gid;
+  gid_t gid;
+
+  gid = ul_process_data.gid;
+  if (gid == (gid_t)-1)
+    gid = getgid ();
+  return gid;
 }
 
 static inline const char *
