@@ -7,6 +7,7 @@ libumberlog_la_LDFLAGS		= -Wl,--version-script,${srcdir}/libumberlog.ld \
 				  -version-info ${LUL_CURRENT}:${LUL_REVISION}:${LUL_AGE}
 
 libumberlog_la_SOURCES		= umberlog.c umberlog.h buffer.c buffer.h
+libumberlog_la_LIBADD		= -lpthread
 
 libumberlog_includedir		= $(includedir)
 libumberlog_include_HEADERS	= umberlog.h

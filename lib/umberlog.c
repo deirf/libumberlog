@@ -34,6 +34,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -62,13 +63,20 @@ static __thread struct
 {
   int flags;
 
-  int facility;
   pid_t pid;
   uid_t uid;
   gid_t gid;
   const char *ident;
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_thread_data;
+static struct
+{
+  /* The lock is used only to serialize writes; we assume that reads are safe
+     even when racing with writes, note that POSIX does not guarantee this (but
+     the BSD syslog does the same thing). */
+  pthread_mutex_t lock;
+  int facility;
+} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, 0 };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -93,7 +101,9 @@ ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
   ul_thread_data.flags = option;
-  ul_thread_data.facility = facility;
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.facility = facility;
+  pthread_mutex_unlock (&ul_process_data.lock);
   ul_thread_data.pid = getpid ();
   ul_thread_data.gid = getgid ();
   ul_thread_data.uid = getuid ();
@@ -107,6 +117,9 @@ ul_closelog (void)
 {
   old_closelog ();
   memset (&ul_thread_data, 0, sizeof (ul_thread_data));
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.facility = 0;
+  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 /** HELPERS **/
@@ -117,7 +130,7 @@ _find_facility (int prio)
   int fac = prio & LOG_FACMASK;
 
   if (fac == 0)
-    fac = ul_thread_data.facility;
+    fac = ul_process_data.facility;
 
   while (facilitynames[i].c_name != NULL &&
          facilitynames[i].c_val != fac)
