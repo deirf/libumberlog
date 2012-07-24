@@ -66,7 +66,6 @@ static __thread struct
   pid_t pid;
   uid_t uid;
   gid_t gid;
-  const char *ident;
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_thread_data;
 static struct
@@ -76,7 +75,8 @@ static struct
      the BSD syslog does the same thing). */
   pthread_mutex_t lock;
   int facility;
-} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, LOG_USER };
+  const char *ident;
+} ul_process_data = { PTHREAD_MUTEX_INITIALIZER, LOG_USER, NULL };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -103,11 +103,11 @@ ul_openlog (const char *ident, int option, int facility)
   ul_thread_data.flags = option;
   pthread_mutex_lock (&ul_process_data.lock);
   ul_process_data.facility = facility;
+  ul_process_data.ident = ident;
   pthread_mutex_unlock (&ul_process_data.lock);
   ul_thread_data.pid = getpid ();
   ul_thread_data.gid = getgid ();
   ul_thread_data.uid = getuid ();
-  ul_thread_data.ident = ident;
 
   gethostname (ul_thread_data.hostname, _POSIX_HOST_NAME_MAX);
 }
@@ -117,6 +117,9 @@ ul_closelog (void)
 {
   old_closelog ();
   memset (&ul_thread_data, 0, sizeof (ul_thread_data));
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.ident = NULL;
+  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 /** HELPERS **/
@@ -489,7 +492,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
                             "pid", "%d", _find_pid (),
                             "facility", "%s", _find_facility (priority),
                             "priority", "%s", _find_prio (priority),
-                            "program", "%s", ul_thread_data.ident,
+                            "program", "%s", ul_process_data.ident,
                             "uid", "%d", _get_uid (),
                             "gid", "%d", _get_gid (),
                             "host", "%s", _get_hostname (),
