@@ -492,11 +492,16 @@ _ul_discover (ul_buffer_t *buffer, int priority)
                             "pid", "%d", _find_pid (),
                             "facility", "%s", _find_facility (priority),
                             "priority", "%s", _find_prio (priority),
-                            "program", "%s", ul_process_data.ident,
                             "uid", "%d", _get_uid (),
                             "gid", "%d", _get_gid (),
                             "host", "%s", _get_hostname (),
                             NULL);
+  if (buffer == NULL)
+    return buffer;
+
+  if (ul_process_data.ident != NULL)
+    buffer = _ul_json_append (buffer, "program", "%s", ul_process_data.ident,
+			      NULL);
 
   if (ul_thread_data.flags & LOG_UL_NOTIME || !buffer)
     return buffer;

@@ -258,6 +258,7 @@ START_TEST (test_closelog)
   free (msg);
 
   verify_value (jo, "facility", "local0");
+  verify_value_missing (jo, "program");
 
   json_object_put (jo);
 }
@@ -307,6 +308,7 @@ START_TEST (test_openlog_defaults)
   free (msg);
 
   verify_value (jo, "facility", "user");
+  verify_value_missing (jo, "program");
   json_object_put (jo);
 
   closelog ();
