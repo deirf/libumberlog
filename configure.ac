@@ -20,7 +20,6 @@ dnl ***************************************************************************
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
