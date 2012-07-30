@@ -51,10 +51,10 @@
 #include "umberlog.h"
 #include "buffer.h"
 
-static void (*old_syslog) ();
-static void (*old_vsyslog) ();
-static void (*old_openlog) ();
-static void (*old_closelog) ();
+static void (*old_syslog) (int priority, const char *message, ...);
+static void (*old_vsyslog) (int priority, const char *message, va_list ap);
+static void (*old_openlog) (const char *ident, int option, int facility);
+static void (*old_closelog) (void);
 
 static void ul_init (void) __attribute__((constructor));
 static void ul_finish (void) __attribute__((destructor));
