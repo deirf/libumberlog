@@ -439,7 +439,6 @@ static char *
 _ul_vasprintf_and_advance (const char *fmt, va_list *pap)
 {
   va_list aq;
-  size_t i;
   char *res;
 
   va_copy (aq, *pap);
@@ -558,7 +557,7 @@ _ul_vformat (ul_buffer_t *buffer, int format_version,
              va_list ap_orig)
 {
   char *value;
-  va_list ap, aq;
+  va_list ap;
 
   /* "&ap" may not be possible for function parameters, so make a copy. */
   va_copy (ap, ap_orig);
@@ -637,7 +636,6 @@ static inline int
 _ul_vsyslog (int format_version, int priority,
              const char *msg_format, va_list ap)
 {
-  const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
 
   if (!(setlogmask (0) & LOG_MASK (LOG_PRI (priority))))

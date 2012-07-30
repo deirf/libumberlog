@@ -28,7 +28,6 @@ test_perf_simple (int flags, unsigned long cnt)
   char *msg;
   unsigned long i;
   struct timespec st, et, dt;
-  long nsec;
   const char *fls;
 
   openlog ("umberlog/test_perf_simple", flags, LOG_LOCAL0);
