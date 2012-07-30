@@ -54,7 +54,7 @@ _ul_buffer_realloc_to_reserve (ul_buffer_t *buffer, size_t size)
 static inline int
 _ul_buffer_reserve_size (ul_buffer_t *buffer, size_t size)
 {
-  if (buffer->alloc_end - buffer->ptr < size)
+  if ((size_t)(buffer->alloc_end - buffer->ptr) < size)
     return _ul_buffer_realloc_to_reserve (buffer, size);
   return 0;
 }
