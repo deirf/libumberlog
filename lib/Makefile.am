@@ -5,6 +5,7 @@ LUL_AGE				= 1
 lib_LTLIBRARIES			= libumberlog.la
 libumberlog_la_LDFLAGS		= -Wl,--version-script,${srcdir}/libumberlog.ld \
 				  -version-info ${LUL_CURRENT}:${LUL_REVISION}:${LUL_AGE}
+EXTRA_libumberlog_la_DEPENDENCIES = libumberlog.ld
 
 libumberlog_la_SOURCES		= umberlog.c umberlog.h buffer.c buffer.h
 libumberlog_la_LIBADD		= -lpthread
