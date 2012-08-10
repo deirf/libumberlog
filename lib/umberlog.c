@@ -99,16 +99,10 @@ ul_finish (void)
   free (ul_buffer.msg);
 }
 
-void
-ul_openlog (const char *ident, int option, int facility)
+/* Must be called with ul_process_data.lock held. */
+static void
+_ul_reset_caches_locked (void)
 {
-  old_openlog (ident, option, facility);
-
-  pthread_mutex_lock (&ul_process_data.lock);
-  ul_process_data.flags = option;
-  ul_process_data.facility = facility;
-  ul_process_data.ident = ident;
-
   /* If either NODISCOVER or NOCACHE is set, don't cache stuff we
      won't use. */
   if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
@@ -137,6 +131,28 @@ ul_openlog (const char *ident, int option, int facility)
     }
 
   gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+}
+
+void
+ul_set_log_flags (int flags)
+{
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.flags = flags;
+  _ul_reset_caches_locked ();
+  pthread_mutex_unlock (&ul_process_data.lock);
+}
+
+void
+ul_openlog (const char *ident, int option, int facility)
+{
+  old_openlog (ident, option, facility);
+
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.facility = facility;
+  ul_process_data.ident = ident;
+
+  _ul_reset_caches_locked ();
+
   pthread_mutex_unlock (&ul_process_data.lock);
 }
 

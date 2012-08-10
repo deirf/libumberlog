@@ -44,33 +44,6 @@ START_TEST (test_simple)
 }
 END_TEST
 
-START_TEST (test_no_discover)
-{
-  char *msg;
-  struct json_object *jo;
-
-  openlog ("umberlog/test_no_discover", LOG_UL_NODISCOVER, LOG_LOCAL0);
-
-  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
-  jo = parse_msg (msg);
-  free (msg);
-
-  verify_value (jo, "msg", "hello, I'm test_no_discover!");
-  verify_value_missing (jo, "facility");
-  verify_value_missing (jo, "priority");
-  verify_value_missing (jo, "program");
-  verify_value_missing (jo, "pid");
-  verify_value_missing (jo, "uid");
-  verify_value_missing (jo, "gid");
-  verify_value_missing (jo, "host");
-  verify_value_missing (jo, "timestamp");
-
-  json_object_put (jo);
-
-  closelog ();
-}
-END_TEST
-
 START_TEST (test_additional_fields)
 {
   char *msg;
@@ -114,33 +87,6 @@ START_TEST (test_discover_priority)
     abort ();
   verify_value (jo, "pid", pid);
   free (pid);
-
-  json_object_put (jo);
-
-  closelog ();
-}
-END_TEST
-
-START_TEST (test_no_timestamp)
-{
-  char *msg;
-  struct json_object *jo;
-
-  openlog ("umberlog/test_no_timestamp", LOG_UL_NOTIME, LOG_LOCAL0);
-
-  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
-  jo = parse_msg (msg);
-  free (msg);
-
-  verify_value (jo, "msg", "hello, I'm test_no_timestamp!");
-  verify_value (jo, "facility", "local0");
-  verify_value (jo, "priority", "debug");
-  verify_value (jo, "program", "umberlog/test_no_timestamp");
-  verify_value_exists (jo, "pid");
-  verify_value_exists (jo, "uid");
-  verify_value_exists (jo, "gid");
-  verify_value_missing (jo, "timestamp");
-  verify_value_exists (jo, "host");
 
   json_object_put (jo);
 
@@ -196,46 +142,6 @@ START_TEST (test_facprio)
 
   verify_value (jo, "facility", "local1");
   verify_value (jo, "priority", "debug");
-
-  json_object_put (jo);
-}
-END_TEST
-
-START_TEST (test_closelog)
-{
-  char *msg;
-  struct json_object *jo;
-
-  openlog ("umberlog/test_closelog", LOG_UL_NODISCOVER, LOG_LOCAL0);
-  closelog ();
-
-  msg = ul_format (LOG_DEBUG, "%s", __FUNCTION__, NULL);
-  jo = parse_msg (msg);
-  free (msg);
-
-  verify_value_missing (jo, "facility");
-
-  json_object_put (jo);
-
-  openlog ("umberlog/test_closelog", 0, LOG_LOCAL0);
-  closelog ();
-
-  msg = ul_format (LOG_DEBUG, "%s", __FUNCTION__, NULL);
-  jo = parse_msg (msg);
-  free (msg);
-
-  verify_value (jo, "facility", "local0");
-#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
-  verify_value (jo, "program", "test_umberlog_preload");
-#else
-  verify_value_missing (jo, "program");
-#endif
-  verify_value_differs (jo, "pid", "0");
-  if (getuid () != 0)
-    verify_value_differs (jo, "uid", "0");
-  if (getgid () != 0)
-    verify_value_differs (jo, "gid", "0");
-  verify_value_differs (jo, "host", "");
 
   json_object_put (jo);
 }
@@ -315,10 +221,8 @@ main (void)
   ft = tcase_create ("Basic tests");
   tcase_add_test (ft, test_openlog_defaults);
   tcase_add_test (ft, test_simple);
-  tcase_add_test (ft, test_no_discover);
   tcase_add_test (ft, test_additional_fields);
   tcase_add_test (ft, test_discover_priority);
-  tcase_add_test (ft, test_no_timestamp);
 #ifdef HAVE_PARSE_PRINTF_FORMAT
   tcase_add_test (ft, test_positional_params);
 #endif
@@ -327,7 +231,6 @@ main (void)
   bt = tcase_create ("Bug tests");
   tcase_add_test (bt, test_json_escape);
   tcase_add_test (bt, test_facprio);
-  tcase_add_test (bt, test_closelog);
   suite_add_tcase (s, bt);
 
   sr = srunner_create (s);

@@ -20,3 +20,8 @@ LIBUMBERLOG_0.2.1 {
 	global:
           ul_closelog;
 } LIBUMBERLOG_0.1.0;
+
+LIBUMBERLOG_0.2.2 {
+	global:
+          ul_set_log_flags;
+} LIBUMBERLOG_0.2.1;

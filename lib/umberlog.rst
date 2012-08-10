@@ -19,6 +19,7 @@ SYNOPSIS
    #include <umberlog.h>
 
    void ul_openlog (const char *ident, int option, int facility);
+   void ul_set_log_flags (int flags);
    void ul_closelog (void);
 
    int ul_syslog (int priority, const char *format, ....);
@@ -35,8 +36,10 @@ DESCRIPTION
 
 **ul_openlog()** is a wrapper around the original **openlog()**
 function, which opens a connection to the system logger for a
-program. The updated version adds support for a number of new option
-flags, described below.
+program.
+
+**ul_set_log_flags** is to be used to set any combination of the new
+log flags described below.
 
 **ul_closelog()** is similar to **ul_openlog()** in that it is a
 wrapper around the original **closelog()**.
@@ -117,8 +120,8 @@ into the payload:
 EXTRA OPTION FLAGS
 ==================
 
-The *option* argument to **ul_openlog()** is an OR of any of the
-original **openlog()** flags, and these:
+The *flag* argument to **ul_set_log_flags()** is an OR of any of these
+flags:
 
 LOG_UL_NODISCOVER
   Disable all automatic discovery, and only include the *message*,

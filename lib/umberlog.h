@@ -42,6 +42,7 @@ char *ul_vformat (int priority, const char *msg_format, va_list ap)
   __attribute__((warn_unused_result));
 
 void ul_openlog (const char *ident, int option, int facility);
+void ul_set_log_flags (int flags);
 void ul_closelog (void);
 int ul_setlogmask (int mask);
 
