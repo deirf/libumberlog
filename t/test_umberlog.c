@@ -31,7 +31,7 @@ verify_value (struct json_object *jo, const char *key,
 
 static void
 verify_value_differs (struct json_object *jo, const char *key,
-		      const char *unexpected_value)
+                      const char *unexpected_value)
 {
   struct json_object *o;
   const char *value;

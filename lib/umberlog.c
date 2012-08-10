@@ -69,11 +69,12 @@ static struct
   int facility;
   const char *ident;
 
-  /* Cached data */
-  pid_t pid;			/* -1 = no value cached */
-  uid_t uid;			/* (uid_t)-1 = no value cached */
-  gid_t gid;			/* (gid_t)-1 = no value cached */
-  char hostname[_POSIX_HOST_NAME_MAX + 1]; /* "" = no value cached */
+  /* Cached data.
+     -1 (or an empty string) means no value cached. */
+  pid_t pid;
+  uid_t uid;
+  gid_t gid;
+  char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_process_data =
   {
     PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL,
