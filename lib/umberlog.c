@@ -77,7 +77,13 @@ static struct
   char hostname[_POSIX_HOST_NAME_MAX + 1];
 } ul_process_data =
   {
-    PTHREAD_MUTEX_INITIALIZER, 0, LOG_USER, NULL,
+    PTHREAD_MUTEX_INITIALIZER,
+#if __UL_PRELOAD__
+    DEFAULT_DISCOVER_FLAGS,
+#else
+    LOG_UL_ALL,
+#endif
+    LOG_USER, NULL,
     -1, (uid_t)-1, (gid_t)-1, { 0, }
   };
 

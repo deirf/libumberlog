@@ -202,6 +202,7 @@ START_TEST (test_openlog_defaults)
   if (getgid () != 0)
     verify_value_differs (jo, "gid", "0");
   verify_value_differs (jo, "host", "");
+
   json_object_put (jo);
 
   closelog ();
@@ -219,10 +220,12 @@ main (void)
   s = suite_create ("Umberlog (LD_PRELOAD) functional testsuite");
 
   ft = tcase_create ("Basic tests");
+#if DEFAULT_DISCOVER_FLAGS == LOG_UL_ALL
   tcase_add_test (ft, test_openlog_defaults);
   tcase_add_test (ft, test_simple);
-  tcase_add_test (ft, test_additional_fields);
   tcase_add_test (ft, test_discover_priority);
+#endif
+  tcase_add_test (ft, test_additional_fields);
 #ifdef HAVE_PARSE_PRINTF_FORMAT
   tcase_add_test (ft, test_positional_params);
 #endif
@@ -230,7 +233,9 @@ main (void)
 
   bt = tcase_create ("Bug tests");
   tcase_add_test (bt, test_json_escape);
+#if DEFAULT_DISCOVER_FLAGS == LOG_UL_ALL
   tcase_add_test (bt, test_facprio);
+#endif
   suite_add_tcase (s, bt);
 
   sr = srunner_create (s);

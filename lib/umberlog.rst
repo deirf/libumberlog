@@ -125,7 +125,8 @@ flags:
 
 LOG_UL_ALL
   Enable all automatically discovered fields. This is the default
-  setting.
+  setting for the linkable library, but for the LD_PRELOAD variant, it
+  can be changed at the library's configure time.
 
 LOG_UL_NODISCOVER
   Disable all automatic discovery, and only include the *message*,
