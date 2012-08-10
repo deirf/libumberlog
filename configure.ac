@@ -2,7 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 dnl
 
 AC_INIT(libumberlog, 0.2.1, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
-AM_INIT_AUTOMAKE([1.9 foreign tar-ustar])
+AM_INIT_AUTOMAKE([1.11 foreign tar-ustar no-dist-gzip dist-xz])
 
 dnl ***************************************************************************
 dnl dependencies
