@@ -7,7 +7,7 @@ CEE-enhanced syslog message generation
 --------------------------------------
 
 :Author: Gergely Nagy <algernon@balabit.hu>
-:Date: 2012-08-10
+:Date: 2012-08-11
 :Manual section: 3
 :Manual group: CEE-enhanced syslog Manual
 
@@ -88,7 +88,7 @@ ones and the new ones too turn the original syslog message into a
 CEE-enabled JSON payload, with the original message put into the *msg*
 field, and any additional fields put into the same structure.
 
-By default, unless the **LOG_UL_NODISCOVER** option flag is set, all
+By default, unless the **LOG_UL_NOIMPLICIT** option flag is set, all
 of these functions will also add a few automatically discovered fields
 into the payload:
 
@@ -128,22 +128,23 @@ LOG_UL_ALL
   setting for the linkable library, but for the LD_PRELOAD variant, it
   can be changed at the library's configure time.
 
-LOG_UL_NODISCOVER
-  Disable all automatic discovery, and only include the *message*,
-  and any specified *key-value* pairs in the generated message.
+LOG_UL_NOIMPLICIT
+  Disable adding any automatic discovered fields implicitly, and only
+  include the *message*, and any specified *key-value* pairs in the
+  generated message.
 
 LOG_UL_NOCACHE
-  When automatic discovery is enabled, disable caching certain
-  properties, that might change between the call to **openlog()** and
-  the **ul_syslog()** invocation.
+  When implict fields are enabled, disable caching certain properties,
+  that might change between the call to **openlog()** and the
+  **ul_syslog()** invocation.
 
 LOG_UL_NOCACHE_UID
-  Disable the *uid* and *gid* caching when automatic discovery is
+  Disable the *uid* and *gid* caching when implicit fields are
   enabled, but do cache the rest.
   
 LOG_UL_NOTIME
   Do not add a high-precision timestamp to the generated message when
-  automatic discovery is enabled.
+  implicit fields are enabled.
 
 EXAMPLES
 ========

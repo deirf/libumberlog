@@ -104,7 +104,7 @@ START_TEST (test_json_escape)
   char *msg;
   struct json_object *jo;
 
-  openlog ("umberlog/test_json_escape", LOG_UL_NODISCOVER, LOG_LOCAL0);
+  openlog ("umberlog/test_json_escape", 0, LOG_LOCAL0);
 
   msg = ul_format (LOG_DEBUG, "%s", __FUNCTION__,
                    "quotes", "Hi, \"quoted value\" speaking!",
@@ -153,7 +153,7 @@ START_TEST (test_positional_params)
   char *msg;
   struct json_object *jo;
 
-  openlog ("umberlog/test_positional_params", LOG_UL_NOTIME, LOG_LOCAL0);
+  openlog ("umberlog/test_positional_params", 0, LOG_LOCAL0);
 
 #define COMPLEX_FORMAT \
   "%3$*5$.*2$hhd , %1$Lf , %4$.3s , %4$s", 1.0L, 5, (char)100, "prefix", -8
@@ -209,6 +209,36 @@ START_TEST (test_openlog_defaults)
 }
 END_TEST
 
+START_TEST (test_openlog_flags)
+{
+  char *msg;
+  struct json_object *jo;
+  char host[_POSIX_HOST_NAME_MAX + 1];
+
+  openlog ("umberlog/test_openlog_flags", LOG_UL_NOIMPLICIT, LOG_LOCAL0);
+
+  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  gethostname (host, _POSIX_HOST_NAME_MAX);
+
+  verify_value (jo, "msg", "hello, I'm test_openlog_flags!");
+  verify_value (jo, "facility", "local0");
+  verify_value (jo, "priority", "debug");
+  verify_value (jo, "program", "umberlog/test_openlog_flags");
+  verify_value_exists (jo, "pid");
+  verify_value_exists (jo, "uid");
+  verify_value_exists (jo, "gid");
+  verify_value_exists (jo, "timestamp");
+  verify_value (jo, "host", host);
+
+  json_object_put (jo);
+
+  closelog ();
+}
+END_TEST
+
 int
 main (void)
 {
@@ -222,6 +252,7 @@ main (void)
   ft = tcase_create ("Basic tests");
 #if DEFAULT_DISCOVER_FLAGS == LOG_UL_ALL
   tcase_add_test (ft, test_openlog_defaults);
+  tcase_add_test (ft, test_openlog_flags);
   tcase_add_test (ft, test_simple);
   tcase_add_test (ft, test_discover_priority);
 #endif

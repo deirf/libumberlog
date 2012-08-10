@@ -32,7 +32,7 @@
 #include <stdarg.h>
 
 #define LOG_UL_ALL             0x0000
-#define LOG_UL_NODISCOVER      0x0040
+#define LOG_UL_NOIMPLICIT      0x0040
 #define LOG_UL_NOCACHE         0x0080
 #define LOG_UL_NOCACHE_UID     0x0100
 #define LOG_UL_NOTIME          0x0200

@@ -44,8 +44,8 @@ test_perf_simple (int flags, unsigned long cnt)
 
   dt = ts_diff (st, et);
 
-  if (flags & LOG_UL_NODISCOVER)
-    fls = "no-discover";
+  if (flags & LOG_UL_NOIMPLICIT)
+    fls = "no-implicit";
   else if (flags & LOG_UL_NOTIME)
     fls = "no-time";
   else
@@ -62,8 +62,8 @@ main (void)
   test_perf_simple (0, 100000);
   test_perf_simple (0, 1000000);
 
-  test_perf_simple (LOG_UL_NODISCOVER, 100000);
-  test_perf_simple (LOG_UL_NODISCOVER, 1000000);
+  test_perf_simple (LOG_UL_NOIMPLICIT, 100000);
+  test_perf_simple (LOG_UL_NOIMPLICIT, 1000000);
 
   test_perf_simple (LOG_UL_NOTIME, 100000);
   test_perf_simple (LOG_UL_NOTIME, 1000000);

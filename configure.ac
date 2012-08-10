@@ -75,15 +75,15 @@ AC_TYPE_SIZE_T
 
 AC_ARG_ENABLE([discovery],
   AS_HELP_STRING([--disable-discovery],
-                 [Do not add automatically-discovered field when using the LD_PRELOAD lib [default=enabled]]),
+                 [Do not implicitly add automatically discovered fields when using the LD_PRELOAD lib [default=enabled]]),
                  [], [enable_discovery=yes])
 if test "x$enable_discovery" != xno; then
-  DEFAULT_DISCOVER_FLAGS=LOG_UL_ALL
+  DEFAULT_LOG_FLAGS=LOG_UL_ALL
 else
-  DEFAULT_DISCOVER_FLAGS=LOG_UL_NODISCOVER
+  DEFAULT_LOG_FLAGS=LOG_UL_NOIMPLICIT
 fi
-AC_DEFINE_UNQUOTED([DEFAULT_DISCOVER_FLAGS], [$DEFAULT_DISCOVER_FLAGS],
-                   [Default flags if ul_set_log_flags() is not called])
+AC_DEFINE_UNQUOTED([DEFAULT_LOG_FLAGS], [$DEFAULT_LOG_FLAGS],
+                   [Default flags for the LD_PRELOAD variant of the library])
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])

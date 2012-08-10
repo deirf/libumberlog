@@ -79,7 +79,7 @@ static struct
   {
     PTHREAD_MUTEX_INITIALIZER,
 #if __UL_PRELOAD__
-    DEFAULT_DISCOVER_FLAGS,
+    DEFAULT_LOG_FLAGS,
 #else
     LOG_UL_ALL,
 #endif
@@ -109,9 +109,9 @@ ul_finish (void)
 static void
 _ul_reset_caches_locked (void)
 {
-  /* If either NODISCOVER or NOCACHE is set, don't cache stuff we
+  /* If either NOIMPLICIT or NOCACHE is set, don't cache stuff we
      won't use. */
-  if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
+  if ((ul_process_data.flags & (LOG_UL_NOIMPLICIT | LOG_UL_NOCACHE)) != 0)
     {
       ul_process_data.pid = -1;
       ul_process_data.gid = -1;
@@ -560,7 +560,7 @@ _ul_discover (ul_buffer_t *buffer, int priority)
   char hostname_buffer[_POSIX_HOST_NAME_MAX + 1];
   const char *ident;
 
-  if (ul_process_data.flags & LOG_UL_NODISCOVER)
+  if (ul_process_data.flags & LOG_UL_NOIMPLICIT)
     return buffer;
 
   buffer = _ul_json_append (buffer,
