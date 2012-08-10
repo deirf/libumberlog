@@ -123,6 +123,10 @@ EXTRA OPTION FLAGS
 The *flag* argument to **ul_set_log_flags()** is an OR of any of these
 flags:
 
+LOG_UL_ALL
+  Enable all automatically discovered fields. This is the default
+  setting.
+
 LOG_UL_NODISCOVER
   Disable all automatic discovery, and only include the *message*,
   and any specified *key-value* pairs in the generated message.
