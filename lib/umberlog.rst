@@ -40,8 +40,7 @@ number of new option flags, described below.
 
 **ul_closelog()** (also aliased to **closelog()**) is similar to
 **ul_openlog()** in that it is a wrapper around the original
-**closelog()**. It clears any settings set so far, to get back to a
-clean state.
+**closelog()**.
 
 **ul_legacy_syslog()** and **ul_legacy_vsyslog()** are both thin
 layers over the original **syslog()** and **vsyslog()** functions, and
