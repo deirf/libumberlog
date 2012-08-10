@@ -103,30 +103,40 @@ void
 ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
+
   pthread_mutex_lock (&ul_process_data.lock);
   ul_process_data.flags = option;
   ul_process_data.facility = facility;
   ul_process_data.ident = ident;
 
+  /* If either NODISCOVER or NOCACHE is set, don't cache stuff we
+     won't use. */
   if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
-    ul_process_data.pid = -1;
-  else
-    ul_process_data.pid = getpid ();
-  if ((ul_process_data.flags &
-       (LOG_UL_NODISCOVER | LOG_UL_NOCACHE | LOG_UL_NOCACHE_UID)) != 0)
     {
-      ul_process_data.gid = (gid_t)-1;
-      ul_process_data.uid = (uid_t)-1;
+      ul_process_data.pid = -1;
+      ul_process_data.gid = -1;
+      ul_process_data.uid = -1;
+      ul_process_data.hostname[0] = '\0';
+      pthread_mutex_unlock (&ul_process_data.lock);
+      return;
+    }
+
+  ul_process_data.pid = getpid();
+
+  /* UID/GID caching can be toggled separately, so check that too,
+     and set them to -1 if caching is disabled. */
+  if ((ul_process_data.flags & LOG_UL_NOCACHE_UID) != 0)
+    {
+      ul_process_data.gid = -1;
+      ul_process_data.uid = -1;
     }
   else
     {
       ul_process_data.gid = getgid ();
       ul_process_data.uid = getuid ();
     }
-  if ((ul_process_data.flags & (LOG_UL_NODISCOVER | LOG_UL_NOCACHE)) != 0)
-    ul_process_data.hostname[0] = '\0';
-  else
-    gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+
+  gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
   pthread_mutex_unlock (&ul_process_data.lock);
 }
 
@@ -134,9 +144,9 @@ void
 ul_closelog (void)
 {
   old_closelog ();
+
   pthread_mutex_lock (&ul_process_data.lock);
   ul_process_data.ident = NULL;
-
   ul_process_data.pid = -1;
   ul_process_data.gid = (gid_t)-1;
   ul_process_data.uid = (uid_t)-1;
