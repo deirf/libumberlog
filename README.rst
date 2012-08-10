@@ -81,15 +81,16 @@ The library follows the usual autotools way of installation:
 Usage
 -----
 
-The library can either be used as an LD_PRELOAD-able shared object, in
-which case it overrides the system-supplied ``syslog()`` calls with
-its own, or as a proper library. In the latter case, please see the
-`API documentation`_ for more information.
+The library comes in two variants: one to link against, and provides
+an enhanced, ``syslog()``-like API. For this, please see the `API
+documentation`_ for more information.
 
-In the former case, using the library is as easy as setting
-**LD_PRELOAD** prior to executing a program (if one wants to control
-this on a per-program basis), or adding the path to the installed
-library to ``/etc/ld.so.preload``.
+The other variant is an LD_PRELOAD-able shared object, installed as
+``libumberlog_preload.so`` into a subdirectory of one's libdir. This
+one overrides the system-suploed ``syslog()`` calls with its own
+version, and turns these into CEE-emitting functions. It can be used
+either on a per-application basis, by setting **LD_PRELOAD**, or
+adding the path to the library to ``/etc/ld.so.preload``.
 
 .. _API documentation: http://algernon.github.com/libumberlog/umberlog.html
 

@@ -7,7 +7,7 @@ CEE-enhanced syslog message generation
 --------------------------------------
 
 :Author: Gergely Nagy <algernon@balabit.hu>
-:Date: 2012-07-19
+:Date: 2012-08-10
 :Manual section: 3
 :Manual group: CEE-enhanced syslog Manual
 
@@ -33,20 +33,18 @@ SYNOPSIS
 DESCRIPTION
 ===========
 
-**ul_openlog()** (also aliased to **openlog()**) is a wrapper around
-the original **openlog()** function, which opens a connection to the
-system logger for a program. The updated version adds support for a
-number of new option flags, described below.
+**ul_openlog()** is a wrapper around the original **openlog()**
+function, which opens a connection to the system logger for a
+program. The updated version adds support for a number of new option
+flags, described below.
 
-**ul_closelog()** (also aliased to **closelog()**) is similar to
-**ul_openlog()** in that it is a wrapper around the original
-**closelog()**.
+**ul_closelog()** is similar to **ul_openlog()** in that it is a
+wrapper around the original **closelog()**.
 
 **ul_legacy_syslog()** and **ul_legacy_vsyslog()** are both thin
-layers over the original **syslog()** and **vsyslog()** functions, and
-the library overrides the original functions with this two. The only
-change these functions bring, are that the message they generate will
-be a CEE-enhanced message, with a JSON payload. See below for an
+layers over the original **syslog()** and **vsyslog()** functions. The
+only change these functions bring, are that the message they generate
+will be a CEE-enhanced message, with a JSON payload. See below for an
 explanation on what this means.
 
 **ul_syslog()** and **ul_vsyslog()** are two new functions provided by
@@ -64,6 +62,11 @@ Note that user-defined printf types defined by
 **ul_format()** and **ul_vformat()** do the same as the syslog
 variants above, except the formatted payload is not sent to syslog,
 but returned as a newly allocated string.
+
+In the *LD_PRELOAD* variant of the library, **ul_openlog()** and
+**ul_closelog()** override the system-default **openlog()** and
+**closelog()** respectively, while **ul_legacy_syslog()** and
+**ul_legacy_vsyslog()** override **syslog()** and **vsyslog()**.
 
 RETURN VALUE
 ============

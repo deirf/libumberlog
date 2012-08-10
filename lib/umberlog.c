@@ -710,35 +710,3 @@ ul_setlogmask (int mask)
 {
   return setlogmask (mask);
 }
-
-#if HAVE___SYSLOG_CHK
-void
-__syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
-{
-  va_list ap;
-
-  va_start (ap, __fmt);
-  ul_legacy_vsyslog (__pri, __fmt, ap);
-  va_end (ap);
-}
-
-void
-__vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
-{
-  ul_legacy_vsyslog (__pri, __fmt, ap);
-}
-#endif
-
-void openlog (const char *ident, int option, int facility)
-  __attribute__((alias ("ul_openlog")));
-
-void closelog (void)
-  __attribute__((alias ("ul_closelog")));
-
-#undef syslog
-void syslog (int priority, const char *msg_format, ...)
-  __attribute__((alias ("ul_legacy_syslog")));
-
-#undef vsyslog
-void vsyslog (int priority, const char *msg_format, va_list ap)
-  __attribute__((alias ("ul_legacy_vsyslog")));

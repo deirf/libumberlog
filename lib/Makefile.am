@@ -16,7 +16,17 @@ libumberlog_include_HEADERS	= umberlog.h
 pkgconfigdir			= $(libdir)/pkgconfig
 pkgconfig_DATA			= libumberlog.pc
 
+pkglib_LTLIBRARIES		= libumberlog_preload.la
+
+libumberlog_preload_la_SOURCES	= umberlog_preload.c buffer.c buffer.h umberlog.h
+libumberlog_preload_la_LIBADD	= -lpthread
+libumberlog_preload_la_LDFLAGS	= -avoid-version -shared
+
 EXTRA_DIST			= umberlog.rst libumberlog.ld
+
+# We need this dependency, but can't compile umberlog.c into
+# libumberlog_preload.
+umberlog_preload.c: umberlog.c
 
 if ENABLE_MANS
 man3_MANS			= umberlog.3
