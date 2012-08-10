@@ -93,10 +93,7 @@ of these functions will also add a few automatically discovered fields
 into the payload:
 
 *pid*
-  The process ID of the program, as returned by **getpid()** The value
-  of this is - by default - determined at the time of calling
-  **ul_openlog()**, but if caching is disabled, it will be rechecked
-  every time.
+  The process ID of the program, as returned by **getpid()**.
 
 *facility*, *priority*
   The syslog facility and priority as a text string.
@@ -105,18 +102,21 @@ into the payload:
   The identification set at the time of **ul_openlog()**.
 
 *uid*, *gid*
-  The user and group ID of the process, determined at **ul_openlog()**
-  time by default, unless caching is disabled.
+  The user and group ID of the process.
 
 *host*
-  The name of the originating host, determined at **ul_openlog()**
-  time by default, using **gethostname()**.
+  The name of the originating host.
 
 *timestamp*
-  High-precision timestamp, in textual format. Included by default,
-  but can be controlled by the **LOG_UL_NOTIME** option flag at
-  **ul_openlog()** time.
 
+  High-precision timestamp, in textual format. Included by default,
+  but can be disabled by adding the **LOG_UL_NOTIME** flag to a
+  **ul_set_log_flags()** call.
+
+If caching is disabled (see **LOG_UL_NOCACHE** below), the *pid*,
+*uid*, *gid*, and *host* fields will be regenerated for every log
+message, otherwise they're cached for as long as possible.
+  
 EXTRA OPTION FLAGS
 ==================
 
