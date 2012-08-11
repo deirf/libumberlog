@@ -30,7 +30,8 @@ test_perf_simple (int flags, unsigned long cnt)
   struct timespec st, et, dt;
   const char *fls;
 
-  openlog ("umberlog/test_perf_simple", flags, LOG_LOCAL0);
+  ul_openlog ("umberlog/test_perf_simple", 0, LOG_LOCAL0);
+  ul_set_log_flags (flags);
 
   clock_gettime (CLOCK_MONOTONIC, &st);
   for (i = 0; i < cnt; i++)
@@ -40,7 +41,7 @@ test_perf_simple (int flags, unsigned long cnt)
     }
   clock_gettime (CLOCK_MONOTONIC, &et);
 
-  closelog ();
+  ul_closelog ();
 
   dt = ts_diff (st, et);
 
