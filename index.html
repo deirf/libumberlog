@@ -76,17 +76,18 @@
     &quot;program&quot;: &quot;sshd&quot;, &quot;uid&quot;: &quot;0&quot;, &quot;gid&quot;: &quot;0&quot;,
     &quot;host&quot;: &quot;hadhodrond&quot;, &quot;timestamp&quot;: &quot;2012-03-24T12:01:34.236987887+0100&quot; }</code></pre>
 <h2 id="requirements">Requirements</h2>
-<p>Apart from the autotools, a C compiler, and <a href="http://oss.metaparadigm.com/json-c/">json-c</a> (for the test suite), there are no other hard dependencies when building, except for a sufficiently modern system.</p>
+<p>Apart from the autotools, a C compiler, there are no other dependencies when building, except for a sufficiently modern system.</p>
+<p>The test suite requires <a href="http://oss.metaparadigm.com/json-c/">json-c</a> and <a href="http://check.sourceforge.net/">check</a> too, and <a href="http://docutils.sourceforge.net/">docutils</a> is required to build the documentation.</p>
 <h2 id="installation">Installation</h2>
 <p>The library follows the usual autotools way of installation:</p>
 <pre><code>$ git clone git://github.com/algernon/libumberlog.git
 $ cd libumberlog
-$ ./autogen.sh
+$ autoreconf -i
 $ ./configure &amp;&amp; make &amp;&amp; make install</code></pre>
 <embed src="https://secure.travis-ci.org/algernon/libumberlog.png?branch=master">
 <h2 id="usage">Usage</h2>
-<p>The library can either be used as an LD_PRELOAD-able shared object, in which case it overrides the system-supplied <code>syslog()</code> calls with its own, or as a proper library. In the latter case, please see the <a href="http://algernon.github.com/libumberlog/umberlog.html">API documentation</a> for more information.</p>
-<p>In the former case, using the library is as easy as setting <strong>LD_PRELOAD</strong> prior to executing a program (if one wants to control this on a per-program basis), or adding the path to the installed library to <code>/etc/ld.so.preload</code>.</p>
+<p>The library comes in two variants: one to link against, and provides an enhanced, <code>syslog()</code>-like API. For this, please see the <a href="http://algernon.github.com/libumberlog/umberlog.html">API documentation</a> for more information.</p>
+<p>The other variant is an LD_PRELOAD-able shared object, installed as <code>libumberlog_preload.so</code> into a subdirectory of one's libdir. This one overrides the system-suploed <code>syslog()</code> calls with its own version, and turns these into CEE-emitting functions. It can be used either on a per-application basis, by setting <strong>LD_PRELOAD</strong>, or adding the path to the library to <code>/etc/ld.so.preload</code>.</p>
 <h2 id="non-goals">Non-goals</h2>
 <ul>
 <li>It is not a goal to support anything else but <code>syslog()</code> payload.</li>

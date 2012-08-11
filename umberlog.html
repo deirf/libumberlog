@@ -74,6 +74,7 @@
 <pre><code>#include &lt;umberlog.h&gt;
 
 void ul_openlog (const char *ident, int option, int facility);
+void ul_set_log_flags (int flags);
 void ul_closelog (void);
 
 int ul_syslog (int priority, const char *format, ....);
@@ -85,20 +86,23 @@ void ul_legacy_vsyslog (int priority, const char *format, va_list ap);
 void ul_format (int priority, const char *format, ...);
 void ul_vformat (int priority, const char *format, va_list ap);</code></pre>
 <h3 id="description">DESCRIPTION</h3>
-<p><strong>ul_openlog()</strong> (also aliased to <strong>openlog()</strong>) is a wrapper around the original <strong>openlog()</strong> function, which opens a connection to the system logger for a program. The updated version adds support for a number of new option flags, described below.</p>
-<p><strong>ul_closelog()</strong> (also aliased to <strong>closelog()</strong>) is similar to <strong>ul_openlog()</strong> in that it is a wrapper around the original <strong>closelog()</strong>. It clears any settings set so far, to get back to a clean state.</p>
-<p><strong>ul_legacy_syslog()</strong> and <strong>ul_legacy_vsyslog()</strong> are both thin layers over the original <strong>syslog()</strong> and <strong>vsyslog()</strong> functions, and the library overrides the original functions with this two. The only change these functions bring, are that the message they generate will be a CEE-enhanced message, with a JSON payload. See below for an explanation on what this means.</p>
+<p><strong>ul_openlog()</strong> is a wrapper around the original <strong>openlog()</strong> function, which opens a connection to the system logger for a program.</p>
+<p><strong>ul_set_log_flags</strong> is to be used to set any combination of the new log flags described below.</p>
+<p><strong>ul_closelog()</strong> is similar to <strong>ul_openlog()</strong> in that it is a wrapper around the original <strong>closelog()</strong>.</p>
+<p><strong>ul_legacy_syslog()</strong> and <strong>ul_legacy_vsyslog()</strong> are both thin layers over the original <strong>syslog()</strong> and <strong>vsyslog()</strong> functions. The only change these functions bring, are that the message they generate will be a CEE-enhanced message, with a JSON payload. See below for an explanation on what this means.</p>
 <p><strong>ul_syslog()</strong> and <strong>ul_vsyslog()</strong> are two new functions provided by the library, that have similar interface to the legacy <strong>syslog()</strong> functions, but they can be used to add arbitrary key-value pairs to the emitted message. After the <em>msg_format</em> format string, and any other parameters it refers to, there must be a NULL-terminated list of <em>key</em>, <em>value format</em>, <em>format parameters</em>. Each of these pairs, constructed from the <em>key</em> and the <strong>printf(3)</strong>-style <em>value format</em> will be added to the generated message.</p>
+<p>Note that user-defined printf types defined by <strong>register_printf_type()</strong> are not supported.</p>
 <p><strong>ul_format()</strong> and <strong>ul_vformat()</strong> do the same as the syslog variants above, except the formatted payload is not sent to syslog, but returned as a newly allocated string.</p>
+<p>In the <em>LD_PRELOAD</em> variant of the library, <strong>ul_openlog()</strong> and <strong>ul_closelog()</strong> override the system-default <strong>openlog()</strong> and <strong>closelog()</strong> respectively, while <strong>ul_legacy_syslog()</strong> and <strong>ul_legacy_vsyslog()</strong> override <strong>syslog()</strong> and <strong>vsyslog()</strong>.</p>
 <h3 id="return-value">RETURN VALUE</h3>
 <p>When successful, <strong>ul_syslog()</strong> and <strong>ul_vsyslog()</strong> return zero, while <strong>ul_format()</strong> and <strong>ul_vformat()</strong> return a character string.</p>
 <p>On failure the former two will return non-zero, the latter two <strong>NULL</strong>, and set <em>errno</em> appropriately.</p>
 <h3 id="cee-payload">CEE PAYLOAD</h3>
 <p>All of the improved <strong>syslog()</strong> functions, the legacy and overridden ones and the new ones too turn the original syslog message into a CEE-enabled JSON payload, with the original message put into the <em>msg</em> field, and any additional fields put into the same structure.</p>
-<p>By default, unless the <strong>LOG_UL_NODISCOVER</strong> option flag is set, all of these functions will also add a few automatically discovered fields into the payload:</p>
+<p>By default, unless the <strong>LOG_UL_NOIMPLICIT</strong> option flag is set, all of these functions will also add a few automatically discovered fields into the payload:</p>
 <dl>
 <dt><em>pid</em></dt>
-<dd><p>The process ID of the program, as returned by <strong>getpid()</strong> The value of this is - by default - determined at the time of calling <strong>ul_openlog()</strong>, but if caching is disabled, it will be rechecked every time.</p>
+<dd><p>The process ID of the program, as returned by <strong>getpid()</strong>.</p>
 </dd>
 <dt><em>facility</em>, <em>priority</em></dt>
 <dd><p>The syslog facility and priority as a text string.</p>
@@ -107,29 +111,34 @@ void ul_vformat (int priority, const char *format, va_list ap);</code></pre>
 <dd><p>The identification set at the time of <strong>ul_openlog()</strong>.</p>
 </dd>
 <dt><em>uid</em>, <em>gid</em></dt>
-<dd><p>The user and group ID of the process, determined at <strong>ul_openlog()</strong> time by default, unless caching is disabled.</p>
+<dd><p>The user and group ID of the process.</p>
 </dd>
 <dt><em>host</em></dt>
-<dd><p>The name of the originating host, determined at <strong>ul_openlog()</strong> time by default, using <strong>gethostname()</strong>.</p>
-</dd>
-<dt><em>timestamp</em></dt>
-<dd><p>High-precision timestamp, in textual format. Included by default, but can be controlled by the <strong>LOG_UL_NOTIME</strong> option flag at <strong>ul_openlog()</strong> time.</p>
+<dd><p>The name of the originating host.</p>
 </dd>
 </dl>
+<p><em>timestamp</em></p>
+<blockquote>
+<p>High-precision timestamp, in textual format. Included by default, but can be disabled by adding the <strong>LOG_UL_NOTIME</strong> flag to a <strong>ul_set_log_flags()</strong> call.</p>
+</blockquote>
+<p>If caching is disabled (see <strong>LOG_UL_NOCACHE</strong> below), the <em>pid</em>, <em>uid</em>, <em>gid</em>, and <em>host</em> fields will be regenerated for every log message, otherwise they're cached for as long as possible.</p>
 <h3 id="extra-option-flags">EXTRA OPTION FLAGS</h3>
-<p>The <em>option</em> argument to <strong>ul_openlog()</strong> is an OR of any of the original <strong>openlog()</strong> flags, and these:</p>
+<p>The <em>flag</em> argument to <strong>ul_set_log_flags()</strong> is an OR of any of these flags:</p>
 <dl>
-<dt>LOG_UL_NODISCOVER</dt>
-<dd><p>Disable all automatic discovery, and only include the <em>message</em>, and any specified <em>key-value</em> pairs in the generated message.</p>
+<dt>LOG_UL_ALL</dt>
+<dd><p>Enable all automatically discovered fields. This is the default setting for the linkable library, but for the LD_PRELOAD variant, it can be changed at the library's configure time.</p>
+</dd>
+<dt>LOG_UL_NOIMPLICIT</dt>
+<dd><p>Disable adding any automatic discovered fields implicitly, and only include the <em>message</em>, and any specified <em>key-value</em> pairs in the generated message.</p>
 </dd>
 <dt>LOG_UL_NOCACHE</dt>
-<dd><p>When automatic discovery is enabled, disable caching certain properties, that might change between the call to <strong>openlog()</strong> and the <strong>ul_syslog()</strong> invocation.</p>
+<dd><p>When implict fields are enabled, disable caching certain properties, that might change between the call to <strong>openlog()</strong> and the <strong>ul_syslog()</strong> invocation.</p>
 </dd>
 <dt>LOG_UL_NOCACHE_UID</dt>
-<dd><p>Disable the <em>uid</em> and <em>gid</em> caching when automatic discovery is enabled, but do cache the rest.</p>
+<dd><p>Disable the <em>uid</em> and <em>gid</em> caching when implicit fields are enabled, but do cache the rest.</p>
 </dd>
 <dt>LOG_UL_NOTIME</dt>
-<dd><p>Do not add a high-precision timestamp to the generated message when automatic discovery is enabled.</p>
+<dd><p>Do not add a high-precision timestamp to the generated message when implicit fields are enabled.</p>
 </dd>
 </dl>
 <h3 id="examples">EXAMPLES</h3>
