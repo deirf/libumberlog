@@ -16,42 +16,8 @@
 #include <check.h>
 
 /**
- * Test the umberlog defaults.
- */
-START_TEST (test_defaults)
-{
-  char *msg;
-  struct json_object *jo;
-
-  char host[_POSIX_HOST_NAME_MAX + 1];
-
-  ul_openlog ("umberlog/test_defaults", 0, LOG_LOCAL0);
-
-  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
-  jo = parse_msg (msg);
-  free (msg);
-
-  gethostname (host, _POSIX_HOST_NAME_MAX);
-
-  verify_value (jo, "msg", "hello, I'm test_defaults!");
-  verify_value (jo, "facility", "local0");
-  verify_value (jo, "priority", "debug");
-  verify_value (jo, "program", "umberlog/test_defaults");
-  verify_value_exists (jo, "pid");
-  verify_value_exists (jo, "uid");
-  verify_value_exists (jo, "gid");
-  verify_value_exists (jo, "timestamp");
-  verify_value (jo, "host", host);
-
-  json_object_put (jo);
-
-  ul_closelog ();
-}
-END_TEST
-
-/**
  * Test that openlog() is not overridden when using the linkable
- * library.
+ * library. This must be the first test!
  */
 START_TEST (test_overrides)
 {
@@ -84,6 +50,40 @@ START_TEST (test_overrides)
   json_object_put (jo);
 
   closelog ();
+}
+END_TEST
+
+/**
+ * Test the umberlog defaults.
+ */
+START_TEST (test_defaults)
+{
+  char *msg;
+  struct json_object *jo;
+
+  char host[_POSIX_HOST_NAME_MAX + 1];
+
+  ul_openlog ("umberlog/test_defaults", 0, LOG_LOCAL0);
+
+  msg = ul_format (LOG_DEBUG, "hello, I'm %s!", __FUNCTION__, NULL);
+  jo = parse_msg (msg);
+  free (msg);
+
+  gethostname (host, _POSIX_HOST_NAME_MAX);
+
+  verify_value (jo, "msg", "hello, I'm test_defaults!");
+  verify_value (jo, "facility", "local0");
+  verify_value (jo, "priority", "debug");
+  verify_value (jo, "program", "umberlog/test_defaults");
+  verify_value_exists (jo, "pid");
+  verify_value_exists (jo, "uid");
+  verify_value_exists (jo, "gid");
+  verify_value_exists (jo, "timestamp");
+  verify_value (jo, "host", host);
+
+  json_object_put (jo);
+
+  ul_closelog ();
 }
 END_TEST
 
@@ -286,6 +286,7 @@ START_TEST (test_discover_priority)
   struct json_object *jo;
 
   ul_openlog ("umberlog/test_discover_priority", 0, LOG_LOCAL0);
+  ul_set_log_flags (LOG_UL_ALL);
 
   msg = ul_format (LOG_DEBUG, "testing 1, 2, 3...",
                    "pid", "%d", getpid () + 42,
@@ -412,8 +413,8 @@ main (void)
   s = suite_create ("Umberlog (linkable) functional testsuite");
 
   ft = tcase_create ("Basic tests");
-  tcase_add_test (ft, test_defaults);
   tcase_add_test (ft, test_overrides);
+  tcase_add_test (ft, test_defaults);
   tcase_add_test (ft, test_ul_openlog);
   tcase_add_test (ft, test_ul_openlog_flag_ignore);
   tcase_add_test (ft, test_closelog);
