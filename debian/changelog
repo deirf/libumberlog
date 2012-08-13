@@ -1,3 +1,9 @@
+libumberlog (0.3.0-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Gergely Nagy <algernon@madhouse-project.org>  Mon, 13 Aug 2012 22:56:18 +0200
+
 libumberlog (0.2.1-1) unstable; urgency=low
 
   * New upstream release.
