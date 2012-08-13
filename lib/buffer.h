@@ -32,12 +32,12 @@
 
 typedef struct
 {
-  size_t alloc;
-  size_t len;
-  char *msg;
+  char *msg;        /* Buffer start */
+  char *ptr;        /* Place to append new data */
+  char *alloc_end;  /* After last allocated byte */
 } ul_buffer_t;
 
-ul_buffer_t *ul_buffer_reset (ul_buffer_t *buffer)
+int ul_buffer_reset (ul_buffer_t *buffer)
   __attribute__((visibility("hidden")));
 ul_buffer_t *ul_buffer_append (ul_buffer_t *buffer,
                                const char *key, const char *value)

@@ -30,208 +30,205 @@
 #include "config.h"
 #include "buffer.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
-static const unsigned char json_exceptions[] =
-  {
-    0x7f,  0x80,  0x81,  0x82,  0x83,  0x84,  0x85,  0x86,
-    0x87,  0x88,  0x89,  0x8a,  0x8b,  0x8c,  0x8d,  0x8e,
-    0x8f,  0x90,  0x91,  0x92,  0x93,  0x94,  0x95,  0x96,
-    0x97,  0x98,  0x99,  0x9a,  0x9b,  0x9c,  0x9d,  0x9e,
-    0x9f,  0xa0,  0xa1,  0xa2,  0xa3,  0xa4,  0xa5,  0xa6,
-    0xa7,  0xa8,  0xa9,  0xaa,  0xab,  0xac,  0xad,  0xae,
-    0xaf,  0xb0,  0xb1,  0xb2,  0xb3,  0xb4,  0xb5,  0xb6,
-    0xb7,  0xb8,  0xb9,  0xba,  0xbb,  0xbc,  0xbd,  0xbe,
-    0xbf,  0xc0,  0xc1,  0xc2,  0xc3,  0xc4,  0xc5,  0xc6,
-    0xc7,  0xc8,  0xc9,  0xca,  0xcb,  0xcc,  0xcd,  0xce,
-    0xcf,  0xd0,  0xd1,  0xd2,  0xd3,  0xd4,  0xd5,  0xd6,
-    0xd7,  0xd8,  0xd9,  0xda,  0xdb,  0xdc,  0xdd,  0xde,
-    0xdf,  0xe0,  0xe1,  0xe2,  0xe3,  0xe4,  0xe5,  0xe6,
-    0xe7,  0xe8,  0xe9,  0xea,  0xeb,  0xec,  0xed,  0xee,
-    0xef,  0xf0,  0xf1,  0xf2,  0xf3,  0xf4,  0xf5,  0xf6,
-    0xf7,  0xf8,  0xf9,  0xfa,  0xfb,  0xfc,  0xfd,  0xfe,
-    0xff,  '\0'
-  };
-
-static __thread ul_buffer_t escape_buffer;
-
-static void ul_buffer_finish (void) __attribute__((destructor));
-
-static void
-ul_buffer_finish (void)
+static int
+_ul_buffer_realloc_to_reserve (ul_buffer_t *buffer, size_t size)
 {
-  free (escape_buffer.msg);
+  size_t new_alloc, ptr_offset;
+  void *new_msg;
+
+  new_alloc = (buffer->alloc_end - buffer->msg + size) * 2;
+  ptr_offset = buffer->ptr - buffer->msg;
+  new_msg = realloc (buffer->msg, new_alloc);
+  if (new_msg == NULL)
+    return -1;
+  buffer->msg = new_msg;
+  buffer->ptr = new_msg + ptr_offset;
+  buffer->alloc_end = new_msg + new_alloc;
+  return 0;
 }
 
-static inline char *
-_ul_str_escape (const char *str, char *dest, size_t *length)
+static inline int
+_ul_buffer_reserve_size (ul_buffer_t *buffer, size_t size)
 {
+  if ((size_t)(buffer->alloc_end - buffer->ptr) < size)
+    return _ul_buffer_realloc_to_reserve (buffer, size);
+  return 0;
+}
+
+static inline int
+_ul_str_escape (ul_buffer_t *dest, const char *str)
+{
+  /* Assumes ASCII!  Keep in sync with the switch! */
+  static const unsigned char json_exceptions[UCHAR_MAX + 1] =
+    {
+      [0x01] = 1, [0x02] = 1, [0x03] = 1, [0x04] = 1, [0x05] = 1, [0x06] = 1,
+      [0x07] = 1, [0x08] = 1, [0x09] = 1, [0x0a] = 1, [0x0b] = 1, [0x0c] = 1,
+      [0x0d] = 1, [0x0e] = 1, [0x0f] = 1, [0x10] = 1, [0x11] = 1, [0x12] = 1,
+      [0x13] = 1, [0x14] = 1, [0x15] = 1, [0x16] = 1, [0x17] = 1, [0x18] = 1,
+      [0x19] = 1, [0x1a] = 1, [0x1b] = 1, [0x1c] = 1, [0x1d] = 1, [0x1e] = 1,
+      [0x1f] = 1, ['\\'] = 1, ['"'] = 1
+    };
+
   const unsigned char *p;
-  char *q;
-  static unsigned char exmap[256];
-  static int exmap_inited;
+  char *q, *end;
 
   if (!str)
-    return NULL;
+    return -1;
 
   p = (unsigned char *)str;
-  q = dest;
+  q = dest->ptr;
+  end = dest->alloc_end;
 
-  if (!exmap_inited)
-    {
-      const unsigned char *e = json_exceptions;
-
-      memset (exmap, 0, 256);
-      while (*e)
-        {
-          exmap[*e] = 1;
-          e++;
-        }
-      exmap_inited = 1;
-    }
+#define BUFFER_RESERVE(SIZE)                               \
+  do                                                       \
+    {                                                      \
+      if (end - q < (SIZE))                                \
+        {                                                  \
+          dest->ptr = q;                                   \
+          if (_ul_buffer_reserve_size (dest, (SIZE)) != 0) \
+            return -1;                                     \
+          q = dest->ptr;                                   \
+          end = dest->alloc_end;                           \
+        }                                                  \
+    }                                                      \
+  while (0)
 
   while (*p)
     {
-      if (exmap[*p])
-        *q++ = *p;
+      if (json_exceptions[*p] == 0)
+        {
+          /* This is a slightly faster variant of equivalent to
+             BUFFER_RESERVE (1) */
+          if (q == end)
+            {
+              dest->ptr = q;
+              if (_ul_buffer_reserve_size (dest, 1) != 0)
+                return -1;
+              q = dest->ptr;
+              end = dest->alloc_end;
+            }
+          *q++ = *p;
+        }
       else
         {
+          /* Keep in sync with json_exceptions! */
           switch (*p)
             {
             case '\b':
-              *q++ = '\\';
-              *q++ = 'b';
-              break;
-            case '\f':
-              *q++ = '\\';
-              *q++ = 'f';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\b", 2);
+              q += 2;
               break;
             case '\n':
-              *q++ = '\\';
-              *q++ = 'n';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\n", 2);
+              q += 2;
               break;
             case '\r':
-              *q++ = '\\';
-              *q++ = 'r';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\r", 2);
+              q += 2;
               break;
             case '\t':
-              *q++ = '\\';
-              *q++ = 't';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\t", 2);
+              q += 2;
               break;
             case '\\':
-              *q++ = '\\';
-              *q++ = '\\';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\\\", 2);
+              q += 2;
               break;
             case '"':
-              *q++ = '\\';
-              *q++ = '"';
+              BUFFER_RESERVE (2);
+              memcpy (q, "\\\"", 2);
+              q += 2;
               break;
             default:
-              if ((*p < ' ') || (*p >= 0177))
-                {
-                  const char *json_hex_chars = "0123456789abcdef";
+              {
+                static const char json_hex_chars[16] = "0123456789abcdef";
 
-                  *q++ = '\\';
-                  *q++ = 'u';
-                  *q++ = '0';
-                  *q++ = '0';
-                  *q++ = json_hex_chars[(*p) >> 4];
-                  *q++ = json_hex_chars[(*p) & 0xf];
-                }
-              else
-                *q++ = *p;
-              break;
+                BUFFER_RESERVE (6);
+                *q++ = '\\';
+                *q++ = 'u';
+                *q++ = '0';
+                *q++ = '0';
+                *q++ = json_hex_chars[(*p) >> 4];
+                *q++ = json_hex_chars[(*p) & 0xf];
+                break;
+              }
             }
         }
       p++;
     }
+  dest->ptr = q;
 
-  *q = 0;
-  if (length)
-    *length = q - dest;
-  return dest;
+  return 0;
 }
 
-static inline ul_buffer_t *
-_ul_buffer_ensure_size (ul_buffer_t *buffer, size_t size)
-{
-  if (buffer->alloc < size)
-    {
-      buffer->alloc += size * 2;
-      buffer->msg = realloc (buffer->msg, buffer->alloc);
-      if (!buffer->msg)
-        return NULL;
-    }
-  return buffer;
-}
-
-ul_buffer_t *
+int
 ul_buffer_reset (ul_buffer_t *buffer)
 {
-  buffer->len = 1;
-  _ul_buffer_ensure_size (buffer, 512);
-  buffer->msg[0] = '{';
-  return buffer;
+  buffer->ptr = buffer->msg;
+  if (_ul_buffer_reserve_size (buffer, 512) != 0)
+    return -1;
+  *buffer->ptr++ = '{';
+  return 0;
 }
 
 ul_buffer_t *
 ul_buffer_append (ul_buffer_t *buffer, const char *key, const char *value)
 {
-  char *k, *v;
-  size_t lk, lv;
-  size_t orig_len = buffer->len;
+  size_t orig_len = buffer->ptr - buffer->msg;
 
   /* Append the key to the buffer */
-  escape_buffer.len = 0;
-  _ul_buffer_ensure_size (&escape_buffer, strlen (key) * 6 + 1);
-  k = _ul_str_escape (key, escape_buffer.msg, &lk);
-  if (!k)
-    return NULL;
+  if (_ul_buffer_reserve_size (buffer, 1) != 0)
+    goto err;
+  *buffer->ptr++ = '"';
 
-  buffer = _ul_buffer_ensure_size (buffer, buffer->len + lk + 4);
-  if (!buffer)
-    return NULL;
+  if (_ul_str_escape (buffer, key) != 0)
+    goto err;
 
-  memcpy (buffer->msg + buffer->len, "\"", 1);
-  memcpy (buffer->msg + buffer->len + 1, k, lk);
-  memcpy (buffer->msg + buffer->len + 1 + lk, "\":\"", 3);
+  if (_ul_buffer_reserve_size (buffer, 3) != 0)
+    goto err;
+  memcpy (buffer->ptr, "\":\"", 3);
+  buffer->ptr += 3;
 
   /* Append the value to the buffer */
-  escape_buffer.len = 0;
-  _ul_buffer_ensure_size (&escape_buffer, strlen (value) * 6 + 1);
-  v = _ul_str_escape (value, escape_buffer.msg, &lv);
-  if (!v)
-    {
-      buffer->len = orig_len;
-      return NULL;
-    }
+  if (_ul_str_escape (buffer, value) != 0)
+    goto err;
 
-  buffer = _ul_buffer_ensure_size (buffer, buffer->len + lk + lv + 6);
-  if (!buffer)
-    {
-      buffer->len = orig_len;
-      return NULL;
-    }
-
-  memcpy (buffer->msg + buffer->len + 1 + lk + 3, v, lv);
-  memcpy (buffer->msg + buffer->len + 1 + lk + 3 + lv, "\",", 2);
-  buffer->len += lk + lv + 6;
+  if (_ul_buffer_reserve_size (buffer, 2) != 0)
+    goto err;
+  memcpy (buffer->ptr, "\",", 2);
+  buffer->ptr += 2;
 
   return buffer;
+
+ err:
+  buffer->ptr = buffer->msg + orig_len;
+  return NULL;
 }
 
 char *
 ul_buffer_finalize (ul_buffer_t *buffer)
 {
-  if (buffer->msg[buffer->len - 1] == ',')
-    buffer->msg[buffer->len - 1] = '}';
+  if (buffer->ptr[-1] == ',')
+    {
+      if (_ul_buffer_reserve_size (buffer, 1) != 0)
+        return NULL;
+      buffer->ptr[-1] = '}';
+    }
   else
     {
-      if (!_ul_buffer_ensure_size (buffer, buffer->len + 1))
+      if (_ul_buffer_reserve_size (buffer, 2) != 0)
         return NULL;
-      buffer->msg[buffer->len++] = '}';
+      *buffer->ptr++ = '}';
     }
-  buffer->msg[buffer->len] = '\0';
+  *buffer->ptr++ = '\0';
   return buffer->msg;
 }

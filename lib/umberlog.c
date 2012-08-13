@@ -28,11 +28,15 @@
 #define _GNU_SOURCE 1
 #define SYSLOG_NAMES 1
 
+#include "config.h"
 #include <stdarg.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <dlfcn.h>
+#include <pthread.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -40,32 +44,48 @@
 #include <time.h>
 #include <errno.h>
 #include <wchar.h>
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+#include <printf.h>
+#endif
 
-#include "config.h"
 #include "umberlog.h"
 #include "buffer.h"
 
-static void (*old_syslog) ();
-static void (*old_vsyslog) ();
-static void (*old_openlog) ();
-static void (*old_closelog) ();
-static int (*old_setlogmask) ();
+static void (*old_syslog) (int priority, const char *message, ...);
+static void (*old_vsyslog) (int priority, const char *message, va_list ap);
+static void (*old_openlog) (const char *ident, int option, int facility);
+static void (*old_closelog) (void);
 
 static void ul_init (void) __attribute__((constructor));
 static void ul_finish (void) __attribute__((destructor));
 
-static __thread struct
+static struct
 {
-  int mask;
+  /* The lock is used only to serialize writes; we assume that reads are safe
+     even when racing with writes, note that POSIX does not guarantee this (but
+     the BSD syslog does the same thing). */
+  pthread_mutex_t lock;
   int flags;
-
   int facility;
+  const char *ident;
+
+  /* Cached data.
+     -1 (or an empty string) means no value cached. */
   pid_t pid;
   uid_t uid;
   gid_t gid;
-  const char *ident;
   char hostname[_POSIX_HOST_NAME_MAX + 1];
-} ul_sys_settings;
+} ul_process_data =
+  {
+    PTHREAD_MUTEX_INITIALIZER,
+#if __UL_PRELOAD__
+    DEFAULT_LOG_FLAGS,
+#else
+    LOG_UL_ALL,
+#endif
+    LOG_USER, NULL,
+    -1, (uid_t)-1, (gid_t)-1, { 0, }
+  };
 
 static __thread ul_buffer_t ul_buffer;
 static __thread int ul_recurse;
@@ -77,7 +97,6 @@ ul_init (void)
   old_vsyslog = dlsym (RTLD_NEXT, "vsyslog");
   old_openlog = dlsym (RTLD_NEXT, "openlog");
   old_closelog = dlsym (RTLD_NEXT, "closelog");
-  old_setlogmask = dlsym (RTLD_NEXT, "setlogmask");
 }
 
 static void
@@ -86,26 +105,75 @@ ul_finish (void)
   free (ul_buffer.msg);
 }
 
+/* Must be called with ul_process_data.lock held. */
+static void
+_ul_reset_caches_locked (void)
+{
+  /* If either NOIMPLICIT or NOCACHE is set, don't cache stuff we
+     won't use. */
+  if ((ul_process_data.flags & (LOG_UL_NOIMPLICIT | LOG_UL_NOCACHE)) != 0)
+    {
+      ul_process_data.pid = -1;
+      ul_process_data.gid = -1;
+      ul_process_data.uid = -1;
+      ul_process_data.hostname[0] = '\0';
+      pthread_mutex_unlock (&ul_process_data.lock);
+      return;
+    }
+
+  ul_process_data.pid = getpid();
+
+  /* UID/GID caching can be toggled separately, so check that too,
+     and set them to -1 if caching is disabled. */
+  if ((ul_process_data.flags & LOG_UL_NOCACHE_UID) != 0)
+    {
+      ul_process_data.gid = -1;
+      ul_process_data.uid = -1;
+    }
+  else
+    {
+      ul_process_data.gid = getgid ();
+      ul_process_data.uid = getuid ();
+    }
+
+  gethostname (ul_process_data.hostname, _POSIX_HOST_NAME_MAX);
+}
+
+void
+ul_set_log_flags (int flags)
+{
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.flags = flags;
+  _ul_reset_caches_locked ();
+  pthread_mutex_unlock (&ul_process_data.lock);
+}
+
 void
 ul_openlog (const char *ident, int option, int facility)
 {
   old_openlog (ident, option, facility);
-  ul_sys_settings.mask = old_setlogmask (0);
-  ul_sys_settings.flags = option;
-  ul_sys_settings.facility = facility;
-  ul_sys_settings.pid = getpid ();
-  ul_sys_settings.gid = getgid ();
-  ul_sys_settings.uid = getuid ();
-  ul_sys_settings.ident = ident;
 
-  gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.facility = facility;
+  ul_process_data.ident = ident;
+
+  _ul_reset_caches_locked ();
+
+  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 void
 ul_closelog (void)
 {
   old_closelog ();
-  memset (&ul_sys_settings, 0, sizeof (ul_sys_settings));
+
+  pthread_mutex_lock (&ul_process_data.lock);
+  ul_process_data.ident = NULL;
+  ul_process_data.pid = -1;
+  ul_process_data.gid = (gid_t)-1;
+  ul_process_data.uid = (uid_t)-1;
+  ul_process_data.hostname[0] = '\0';
+  pthread_mutex_unlock (&ul_process_data.lock);
 }
 
 /** HELPERS **/
@@ -116,7 +184,7 @@ _find_facility (int prio)
   int fac = prio & LOG_FACMASK;
 
   if (fac == 0)
-    fac = ul_sys_settings.facility;
+    fac = ul_process_data.facility;
 
   while (facilitynames[i].c_name != NULL &&
          facilitynames[i].c_val != fac)
@@ -145,150 +213,314 @@ _find_prio (int prio)
 static inline pid_t
 _find_pid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
-    return getpid ();
-  else
-    return ul_sys_settings.pid;
+  pid_t pid;
+
+  pid = ul_process_data.pid;
+  if (pid == -1)
+    pid = getpid ();
+  return pid;
 }
 
 static inline uid_t
 _get_uid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
-      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
-    return getuid ();
-  else
-    return ul_sys_settings.uid;
+  uid_t uid;
+
+  uid = ul_process_data.uid;
+  if (uid == (uid_t)-1)
+    uid = getuid ();
+  return uid;
 }
 
-static inline uid_t
+static inline gid_t
 _get_gid (void)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE ||
-      ul_sys_settings.flags & LOG_UL_NOCACHE_UID)
-    return getgid ();
-  else
-    return ul_sys_settings.gid;
+  gid_t gid;
+
+  gid = ul_process_data.gid;
+  if (gid == (gid_t)-1)
+    gid = getgid ();
+  return gid;
 }
 
 static inline const char *
-_get_hostname (void)
+_get_hostname (char *hostname_buffer)
 {
-  if (ul_sys_settings.flags & LOG_UL_NOCACHE)
-    gethostname (ul_sys_settings.hostname, _POSIX_HOST_NAME_MAX);
-  return ul_sys_settings.hostname;
+  if (ul_process_data.hostname[0] != '\0')
+    return ul_process_data.hostname;
+
+  gethostname (hostname_buffer, _POSIX_HOST_NAME_MAX);
+  return hostname_buffer;
 }
 
-#define _ul_va_spin(fmt,ap)                             \
-  {                                                     \
-    size_t i;                                           \
-                                                        \
-    for (i = 0; i < strlen (fmt); i++)                  \
-      {                                                 \
-        int eof = 0;                                    \
-                                                        \
-        if (fmt[i] != '%')                              \
-          continue;                                     \
-        i++;                                            \
-        while (eof != 1)                                \
-          {                                             \
-            switch (fmt[i])                             \
-              {                                         \
-              case 'd':                                 \
-              case 'i':                                 \
-              case 'o':                                 \
-              case 'u':                                 \
-              case 'x':                                 \
-              case 'X':                                 \
-                if (fmt[i - 1] == 'l')                  \
-                  {                                     \
-                    if (i - 2 > 0 && fmt[i - 2] == 'l') \
-                      (void)va_arg (ap, long long int); \
-                    else                                \
-                      (void)va_arg (ap, long int);      \
-                  }                                     \
-                else                                    \
-                  (void)va_arg (ap, int);               \
-                eof = 1;                                \
-                break;                                  \
-              case 'e':                                 \
-              case 'E':                                 \
-              case 'f':                                 \
-              case 'F':                                 \
-              case 'g':                                 \
-              case 'G':                                 \
-              case 'a':                                 \
-              case 'A':                                 \
-                if (fmt[i - 1] == 'L')                  \
-                  (void)va_arg (ap, long double);       \
-                else                                    \
-                  (void)va_arg (ap, double);            \
-                eof = 1;                                \
-                break;                                  \
-              case 'c':                                 \
-                if (fmt [i - 1] == 'l')                 \
-                  (void)va_arg (ap, wint_t);            \
-                else                                    \
-                  (void)va_arg (ap, int);               \
-                eof = 1;                                \
-                break;                                  \
-              case 's':                                 \
-                if (fmt [i - 1] == 'l')                 \
-                  (void)va_arg (ap, wchar_t *);         \
-                else                                    \
-                  (void)va_arg (ap, char *);            \
-                eof = 1;                                \
-                break;                                  \
-              case 'p':                                 \
-                (void)va_arg (ap, void *);              \
-                eof = 1;                                \
-                break;                                  \
-              case '%':                                 \
-                eof = 1;                                \
-                break;                                  \
-              default:                                  \
-                i++;                                    \
-              }                                         \
-          }                                             \
-      }                                                 \
-  }
+static inline const char *
+_get_ident (void)
+{
+  const char *ident;
+
+  ident = ul_process_data.ident;
+#ifdef HAVE_PROGRAM_INVOCATION_SHORT_NAME
+  if (ident == NULL)
+    ident = program_invocation_short_name;
+#endif
+  return ident;
+}
+
+#ifdef HAVE_PARSE_PRINTF_FORMAT
+
+#define _ul_va_spin _ul_va_spin_glibc
+
+static int
+_ul_va_spin_glibc (const char *fmt, va_list *pap)
+{
+  size_t num_args, i;
+  int *types;
+
+  num_args = parse_printf_format (fmt, 0, NULL);
+  types = malloc (num_args * sizeof (*types));
+  if (types == NULL)
+    goto err;
+  if (parse_printf_format (fmt, num_args, types) != num_args)
+    goto err; /* Should never happen */
+
+  for (i = 0; i < num_args; i++)
+    {
+      switch (types[i])
+        {
+        case PA_CHAR:
+        case PA_INT | PA_FLAG_SHORT:
+        case PA_INT:
+          (void)va_arg (*pap, int);
+          break;
+        case PA_INT | PA_FLAG_LONG:
+          (void)va_arg (*pap, long int);
+          break;
+        case PA_INT | PA_FLAG_LONG_LONG:
+          (void)va_arg (*pap, long long int);
+          break;
+
+        case PA_WCHAR:
+          (void)va_arg (*pap, wint_t);
+          break;
+
+        case PA_STRING:
+          (void)va_arg (*pap, char *);
+          break;
+
+        case PA_WSTRING:
+          (void)va_arg (*pap, wchar_t *);
+          break;
+
+        case PA_POINTER:
+          (void)va_arg (*pap, void *);
+          break;
+
+        case PA_FLOAT:
+        case PA_DOUBLE:
+          (void)va_arg (*pap, double);
+          break;
+        case PA_DOUBLE | PA_FLAG_LONG_DOUBLE:
+          (void)va_arg (*pap, long double);
+          break;
+
+        default:
+          if ((types[i] & PA_FLAG_PTR) != 0)
+            {
+              (void)va_arg (*pap, void *);
+              break;
+            }
+          /* Unknown user-defined parameter type.  Can we log that this
+             happened? */
+          goto err;
+        }
+    }
+
+  free (types);
+  return 0;
+
+ err:
+  free (types);
+  return -1;
+}
+#else /* !HAVE_PARSE_PRINTF_FORMAT */
+
+#define _ul_va_spin _ul_va_spin_legacy
+
+static int
+_ul_va_spin_legacy (const char *fmt, va_list *pap)
+{
+  size_t i;
+
+  for (i = 0; i < strlen (fmt); i++)
+    {
+      int eof = 0;
+
+      if (fmt[i] != '%')
+        continue;
+      i++;
+      while (eof != 1)
+        {
+          switch (fmt[i])
+            {
+            case 'd':
+            case 'i':
+            case 'o':
+            case 'u':
+            case 'x':
+            case 'X':
+              if (fmt[i - 1] == 'l')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'l')
+                    (void)va_arg (*pap, long long int);
+                  else
+                    (void)va_arg (*pap, long int);
+                }
+              else if (fmt[i - 1] == 'j')
+                (void)va_arg (*pap, intmax_t);
+              else if (fmt[i - 1] == 'z')
+                (void)va_arg (*pap, ssize_t);
+              else if (fmt[i - 1] == 't')
+                (void)va_arg (*pap, ptrdiff_t);
+              else /* Also handles h, hh */
+                (void)va_arg (*pap, int);
+              eof = 1;
+              break;
+            case 'e':
+            case 'E':
+            case 'f':
+            case 'F':
+            case 'g':
+            case 'G':
+            case 'a':
+            case 'A':
+              if (fmt[i - 1] == 'L')
+                (void)va_arg (*pap, long double);
+              else
+                (void)va_arg (*pap, double);
+              eof = 1;
+              break;
+            case 'c':
+              if (fmt [i - 1] == 'l')
+                (void)va_arg (*pap, wint_t);
+              else
+                (void)va_arg (*pap, int);
+              eof = 1;
+              break;
+            case 'C':
+              (void)va_arg (*pap, wint_t);
+              eof = 1;
+              break;
+            case 's':
+              if (fmt [i - 1] == 'l')
+                (void)va_arg (*pap, wchar_t *);
+              else
+                (void)va_arg (*pap, char *);
+              eof = 1;
+              break;
+            case 'S':
+              (void)va_arg (*pap, wchar_t *);
+              eof = 1;
+              break;
+            case 'p':
+              (void)va_arg (*pap, void *);
+              eof = 1;
+              break;
+            case 'n':
+              if (fmt[i - 1] == 'l')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'l')
+                    (void)va_arg (*pap, long long *);
+                  else
+                    (void)va_arg (*pap, long int *);
+                }
+              else if (fmt[i - 1] == 'h')
+                {
+                  if (i - 2 > 0 && fmt[i - 2] == 'h')
+                    (void)va_arg (*pap, signed char *);
+                  else
+                    (void)va_arg (*pap, short int *);
+                }
+              else if (fmt[i - 1] == 'j')
+                (void)va_arg (*pap, intmax_t *);
+              else if (fmt[i - 1] == 'z')
+                (void)va_arg (*pap, ssize_t *);
+              else if (fmt[i - 1] == 't')
+                (void)va_arg (*pap, ptrdiff_t *);
+              else
+                (void)va_arg (*pap, int *);
+              eof = 1;
+              break;
+            case '*':
+              (void)va_arg (*pap, int);
+              i++;
+              break; /* eof stays set to 0 */
+            case '%':
+              eof = 1;
+              break;
+            default:
+              i++;
+            }
+        }
+    }
+  return 0;
+}
+#endif /* !HAVE_PARSE_PRINTF_FORMAT */
+
+/* Return a newly allocated string.
+   On failure, NULL is returned and it is undefined what PAP points to. */
+static char *
+_ul_vasprintf_and_advance (const char *fmt, va_list *pap)
+{
+  va_list aq;
+  char *res;
+
+  va_copy (aq, *pap);
+  if (vasprintf (&res, fmt, aq) < 0)
+    {
+      va_end (aq);
+      return NULL;
+    }
+  va_end (aq);
+  if (res == NULL)
+    return NULL;
+
+  if (_ul_va_spin (fmt, pap) != 0)
+    {
+      free (res);
+      return NULL;
+    }
+  return res;
+}
 
 static inline ul_buffer_t *
-_ul_json_vappend (ul_buffer_t *buffer, va_list ap)
+_ul_json_vappend (ul_buffer_t *buffer, va_list ap_orig)
 {
+  va_list ap;
   char *key;
 
+  /* "&ap" may not be possible for function parameters, so make a copy. */
+  va_copy (ap, ap_orig);
   while ((key = (char *)va_arg (ap, char *)) != NULL)
     {
       char *fmt = (char *)va_arg (ap, char *);
-      char *value = NULL;
-      va_list aq;
+      char *value;
 
-      va_copy (aq, ap);
-      if (vasprintf (&value, fmt, aq) == -1)
-        {
-          va_end (aq);
-          return NULL;
-        }
-      va_end (aq);
-
+      value = _ul_vasprintf_and_advance (fmt, &ap);
       if (!value)
-        return NULL;
-
+        goto err;
       buffer = ul_buffer_append (buffer, key, value);
-
-      if (buffer == NULL)
-        {
-          free (value);
-          return NULL;
-        }
-
       free (value);
 
-      _ul_va_spin (fmt, ap);
+      if (buffer == NULL)
+        goto err;
     }
+  va_end (ap);
 
   return buffer;
+
+ err:
+  va_end (ap);
+  return NULL;
 }
 
 static inline ul_buffer_t *
@@ -317,7 +549,7 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
   strftime (stamp, sizeof (stamp), "%FT%T", tm);
   strftime (zone, sizeof (zone), "%z", tm);
 
-  return _ul_json_append (buffer, "timestamp", "%s.%lu%s",
+  return _ul_json_append (buffer, "timestamp", "%s.%09lu%s",
                           stamp, ts.tv_nsec, zone,
                           NULL);
 }
@@ -325,20 +557,28 @@ _ul_json_append_timestamp (ul_buffer_t *buffer)
 static inline ul_buffer_t *
 _ul_discover (ul_buffer_t *buffer, int priority)
 {
-  if (ul_sys_settings.flags & LOG_UL_NODISCOVER)
+  char hostname_buffer[_POSIX_HOST_NAME_MAX + 1];
+  const char *ident;
+
+  if (ul_process_data.flags & LOG_UL_NOIMPLICIT)
     return buffer;
 
   buffer = _ul_json_append (buffer,
                             "pid", "%d", _find_pid (),
                             "facility", "%s", _find_facility (priority),
                             "priority", "%s", _find_prio (priority),
-                            "program", "%s", ul_sys_settings.ident,
                             "uid", "%d", _get_uid (),
                             "gid", "%d", _get_gid (),
-                            "host", "%s", _get_hostname (),
+                            "host", "%s", _get_hostname (hostname_buffer),
                             NULL);
+  if (buffer == NULL)
+    return buffer;
 
-  if (ul_sys_settings.flags & LOG_UL_NOTIME || !buffer)
+  ident = _get_ident ();
+  if (ident != NULL)
+    buffer = _ul_json_append (buffer, "program", "%s", ident, NULL);
+
+  if (ul_process_data.flags & LOG_UL_NOTIME || !buffer)
     return buffer;
 
   return _ul_json_append_timestamp (buffer);
@@ -347,41 +587,37 @@ _ul_discover (ul_buffer_t *buffer, int priority)
 static inline ul_buffer_t *
 _ul_vformat (ul_buffer_t *buffer, int format_version,
              int priority, const char *msg_format,
-             va_list ap)
+             va_list ap_orig)
 {
   char *value;
-  va_list aq;
+  va_list ap;
 
-  va_copy (aq, ap);
-  if (vasprintf (&value, msg_format, aq) == -1)
-    {
-      va_end (aq);
-      return NULL;
-    }
-  va_end (aq);
+  /* "&ap" may not be possible for function parameters, so make a copy. */
+  va_copy (ap, ap_orig);
+  if (ul_buffer_reset (buffer) != 0)
+    goto err;
+
+  value = _ul_vasprintf_and_advance (msg_format, &ap);
   if (!value)
-    return NULL;
-
-  ul_buffer_reset (buffer);
-
+    goto err;
   buffer = ul_buffer_append (buffer, "msg", value);
-  if (buffer == NULL)
-    {
-      free (value);
-      return NULL;
-    }
-
   free (value);
 
-  _ul_va_spin (msg_format, ap);
+  if (buffer == NULL)
+    goto err;
 
   if (format_version > 0)
     buffer = _ul_json_vappend (buffer, ap);
 
   if (!buffer)
-    return NULL;
+    goto err;
 
+  va_end (ap);
   return _ul_discover (buffer, priority);
+
+ err:
+  va_end (ap);
+  return NULL;
 }
 
 static inline const char *
@@ -433,10 +669,9 @@ static inline int
 _ul_vsyslog (int format_version, int priority,
              const char *msg_format, va_list ap)
 {
-  const char *msg;
   ul_buffer_t *buffer = &ul_buffer;
 
-  if (!(ul_sys_settings.mask & priority))
+  if (!(setlogmask (0) & LOG_MASK (LOG_PRI (priority))))
     return 0;
 
   buffer = _ul_vformat (buffer, format_version, priority, msg_format, ap);
@@ -478,8 +713,8 @@ ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap)
     {
       ul_recurse = 1;
       _ul_vsyslog (0, priority, msg_format, ap);
+      ul_recurse = 0;
     }
-  ul_recurse = 0;
 }
 
 void
@@ -495,42 +730,5 @@ ul_legacy_syslog (int priority, const char *msg_format, ...)
 int
 ul_setlogmask (int mask)
 {
-  if (mask != 0)
-    ul_sys_settings.mask = mask;
-  return old_setlogmask (mask);
+  return setlogmask (mask);
 }
-
-#if HAVE___SYSLOG_CHK
-void
-__syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
-{
-  va_list ap;
-
-  va_start (ap, __fmt);
-  ul_legacy_vsyslog (__pri, __fmt, ap);
-  va_end (ap);
-}
-
-void
-__vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
-{
-  ul_legacy_vsyslog (__pri, __fmt, ap);
-}
-#endif
-
-void openlog (const char *ident, int option, int facility)
-  __attribute__((alias ("ul_openlog")));
-
-void closelog (void)
-  __attribute__((alias ("ul_closelog")));
-
-#undef syslog
-void syslog (int priority, const char *msg_format, ...)
-  __attribute__((alias ("ul_legacy_syslog")));
-
-#undef vsyslog
-void vsyslog (int priority, const char *msg_format, va_list ap)
-  __attribute__((alias ("ul_legacy_vsyslog")));
-
-int setlogmask (int mask)
-  __attribute__((alias ("ul_setlogmask")));

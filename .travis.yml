@@ -1,8 +1,12 @@
 language: c
 install: sudo apt-get install libjson0-dev check python-docutils
 before_script:
-  - ./autogen.sh
+  - install -d m4
+  - autoreconf -i
 script:
   - ./configure
   - make
   - make check
+compiler:
+  - gcc
+  - clang

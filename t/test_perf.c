@@ -28,10 +28,10 @@ test_perf_simple (int flags, unsigned long cnt)
   char *msg;
   unsigned long i;
   struct timespec st, et, dt;
-  long nsec;
   const char *fls;
 
-  openlog ("umberlog/test_perf_simple", flags, LOG_LOCAL0);
+  ul_openlog ("umberlog/test_perf_simple", 0, LOG_LOCAL0);
+  ul_set_log_flags (flags);
 
   clock_gettime (CLOCK_MONOTONIC, &st);
   for (i = 0; i < cnt; i++)
@@ -41,12 +41,12 @@ test_perf_simple (int flags, unsigned long cnt)
     }
   clock_gettime (CLOCK_MONOTONIC, &et);
 
-  closelog ();
+  ul_closelog ();
 
   dt = ts_diff (st, et);
 
-  if (flags & LOG_UL_NODISCOVER)
-    fls = "no-discover";
+  if (flags & LOG_UL_NOIMPLICIT)
+    fls = "no-implicit";
   else if (flags & LOG_UL_NOTIME)
     fls = "no-time";
   else
@@ -63,8 +63,8 @@ main (void)
   test_perf_simple (0, 100000);
   test_perf_simple (0, 1000000);
 
-  test_perf_simple (LOG_UL_NODISCOVER, 100000);
-  test_perf_simple (LOG_UL_NODISCOVER, 1000000);
+  test_perf_simple (LOG_UL_NOIMPLICIT, 100000);
+  test_perf_simple (LOG_UL_NOIMPLICIT, 1000000);
 
   test_perf_simple (LOG_UL_NOTIME, 100000);
   test_perf_simple (LOG_UL_NOTIME, 1000000);

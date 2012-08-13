@@ -1,5 +1,76 @@
 #+STARTUP: indent showall                       -*- org -*-
 
+* 0.3.0 - <2012-08-13 Mon>
+
+This release is is heavily based on the work of Miloslav Trmač
+<mitr@redhat.com>, many thanks for his contributions!
+
+** API/ABI breaking changes
+
+*** The library was split into two variants
+
+There is now an LD_PRELOAD variant (libumberlog_preload.so), and a
+library applications can link to. The former has overrides for the
+syslog() family of functions, the latter does not.
+
+See the documentation on what other differences there are between the
+two!
+
+*** The LOG_UL_NODISCOVER flag was renamed to LOG_UL_NOIMPLICIT
+
+The term "discover" wasn't entirely clear, and did not correctly
+reflect what goes on anyway. For this reason, it was renamed to
+LOG_UL_NOIMPLICIT.
+
+*** New function: ul_set_log_flags()
+
+Instead of being able to set flags via (ul_)openlog(), all flags must
+be set from this version forward with ul_set_log_flags().
+
+The LD_PRELOAD variant will ship with all flags enabled by default, so
+that automatically discovered fields can be added implicitly.
+
+*** Settings and caches are now per-process, not per-thread
+
+Settings formerly set via ul_openlog() and cached values were
+thread-local before, they are now per-process, to mimic the original
+syslog() family more closely.
+
+*** Further syslog() compatibility enhancements
+
+The ul_closelog() function does not clear the previously set flags, to
+be in line with how the original closelog() works.
+
+** Features
+
+*** Performance improvements
+
+Significant performance improvements and internal code cleanups have
+been made, resulting in some cases over 20% speed ups.
+
+*** Support for a wider range of format strings
+
+On glibc-based platforms, the library now uses parse_printf_format(),
+to support a far wider range of format strings than the old code
+did. On other platforms, the old code is still used - but has received
+improvements too.
+
+** Bugfixes
+
+*** Fixed a 1-byte heap overflow in ul_buffer_initialize
+
+*** Don't use \f in JSON, use \uNNNN instead
+
+Some parsers - notably json-c - do not recognise \f, so fall back to
+\uNNNN instead.
+
+*** Timestamp formatting has been fixed
+
+*** Log mask handling has also been fixed
+
+Previously, if the mask was not a pure priority mask, the library did
+not handle it appropriately.
+
 * 0.2.1 - <2012-05-02 Wed>
 
 ** Fixed JSON formatting for syslog() messages

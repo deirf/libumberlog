@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
 
-AC_INIT(libumberlog, 0.2.1, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
-AM_INIT_AUTOMAKE([1.9 tar-ustar])
+AC_INIT(libumberlog, 0.3.0, algernon@balabit.hu, libumberlog, https://github.com/algernon/libumberlog)
+AM_INIT_AUTOMAKE([1.11 foreign tar-ustar no-dist-gzip dist-xz])
 
 dnl ***************************************************************************
 dnl dependencies
@@ -20,7 +20,6 @@ dnl ***************************************************************************
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AC_PROG_RANLIB
 AM_PROG_CC_STDC
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
@@ -40,7 +39,9 @@ AC_CHECK_HEADERS([syslog.h dlfcn.h limits.h wchar.h])
 
 dnl ***************************************************************************
 dnl Checks for libraries
-AC_CHECK_FUNCS([gethostname strdup memset __syslog_chk])
+dnl Note that program_invocation_short_name is a variable, not a function; this
+dnl currently happens to work fine.
+AC_CHECK_FUNCS([gethostname strdup memset __syslog_chk parse_printf_format program_invocation_short_name])
 
 dnl The dlopen() function is in the C library for *BSD and in
 dnl libdl on GLIBC-based systems
@@ -71,6 +72,18 @@ AC_FUNC_REALLOC
 AC_TYPE_PID_T
 AC_TYPE_UID_T
 AC_TYPE_SIZE_T
+
+AC_ARG_ENABLE([discovery],
+  AS_HELP_STRING([--disable-discovery],
+                 [Do not implicitly add automatically discovered fields when using the LD_PRELOAD lib [default=enabled]]),
+                 [], [enable_discovery=yes])
+if test "x$enable_discovery" != xno; then
+  DEFAULT_LOG_FLAGS=LOG_UL_ALL
+else
+  DEFAULT_LOG_FLAGS=LOG_UL_NOIMPLICIT
+fi
+AC_DEFINE_UNQUOTED([DEFAULT_LOG_FLAGS], [$DEFAULT_LOG_FLAGS],
+                   [Default flags for the LD_PRELOAD variant of the library])
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [package name])
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [version number])

@@ -1,4 +1,4 @@
-/* umberlog.h -- CEE-enhanced syslog API.
+/* umberlog_preload.c -- CEE-enhanced syslog API, LD_PRELOAD version
  *
  * Copyright (c) 2012 BalaBit IT Security Ltd.
  * All rights reserved.
@@ -25,33 +25,40 @@
  * SUCH DAMAGE.
  */
 
-#ifndef UMBERLOG_H
-#define UMBERLOG_H 1
+#define _GNU_SOURCE 1
 
-#include <syslog.h>
-#include <stdarg.h>
+#define __UL_PRELOAD__ 1
 
-#define LOG_UL_ALL             0x0000
-#define LOG_UL_NOIMPLICIT      0x0040
-#define LOG_UL_NOCACHE         0x0080
-#define LOG_UL_NOCACHE_UID     0x0100
-#define LOG_UL_NOTIME          0x0200
+#include "umberlog.c"
 
-char *ul_format (int priority, const char *msg_format, ...)
-  __attribute__((warn_unused_result, sentinel));
-char *ul_vformat (int priority, const char *msg_format, va_list ap)
-  __attribute__((warn_unused_result));
+#if HAVE___SYSLOG_CHK
+void
+__syslog_chk (int __pri, int __flag, __const char *__fmt, ...)
+{
+  va_list ap;
 
-void ul_openlog (const char *ident, int option, int facility);
-void ul_set_log_flags (int flags);
-void ul_closelog (void);
-int ul_setlogmask (int mask);
+  va_start (ap, __fmt);
+  ul_legacy_vsyslog (__pri, __fmt, ap);
+  va_end (ap);
+}
 
-int ul_syslog (int priority, const char *msg_format, ...)
-  __attribute__((sentinel));
-int ul_vsyslog (int priority, const char *msg_format, va_list ap);
-
-void ul_legacy_syslog (int priority, const char *msg_format, ...);
-void ul_legacy_vsyslog (int priority, const char *msg_format, va_list ap);
-
+void
+__vsyslog_chk (int __pri, int __flag, __const char *__fmt, va_list ap)
+{
+  ul_legacy_vsyslog (__pri, __fmt, ap);
+}
 #endif
+
+void openlog (const char *ident, int option, int facility)
+  __attribute__((alias ("ul_openlog")));
+
+void closelog (void)
+  __attribute__((alias ("ul_closelog")));
+
+#undef syslog
+void syslog (int priority, const char *msg_format, ...)
+  __attribute__((alias ("ul_legacy_syslog")));
+
+#undef vsyslog
+void vsyslog (int priority, const char *msg_format, va_list ap)
+  __attribute__((alias ("ul_legacy_vsyslog")));
