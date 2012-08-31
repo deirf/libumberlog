@@ -71,7 +71,7 @@ The library follows the usual autotools way of installation:
 
 ::
 
- $ git clone git://github.com/algernon/libumberlog.git
+ $ git clone git://github.com/deirf/libumberlog.git
  $ cd libumberlog
  $ autoreconf -i
  $ ./configure && make && make install
@@ -92,7 +92,7 @@ version, and turns these into CEE-emitting functions. It can be used
 either on a per-application basis, by setting **LD_PRELOAD**, or
 adding the path to the library to ``/etc/ld.so.preload``.
 
-.. _API documentation: http://algernon.github.com/libumberlog/umberlog.html
+.. _API documentation: http://deirf.github.com/libumberlog/umberlog.html
 
 Non-goals
 ---------
@@ -110,4 +110,4 @@ License
 This library is released under a two-clause BSD license, see the
 `LICENSE`_ file for details.
 
-.. _LICENSE: https://raw.github.com/algernon/libumberlog/master/LICENSE
+.. _LICENSE: https://raw.github.com/deirf/libumberlog/master/LICENSE
