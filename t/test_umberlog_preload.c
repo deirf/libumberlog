@@ -127,7 +127,7 @@ main (void)
 
   s = suite_create ("Umberlog (LD_PRELOAD) functional testsuite");
 
-#if DEFAULT_DISCOVER_FLAGS == LOG_UL_ALL
+#if DEFAULT_LOG_FLAGS == LOG_UL_ALL
   ft = tcase_create ("Basic tests");
   tcase_add_test (ft, test_openlog_defaults);
   tcase_add_test (ft, test_openlog_flags);
