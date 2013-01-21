@@ -14,13 +14,13 @@ dnl Initial setup
 
 AC_CONFIG_MACRO_DIR([m4])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
-AM_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS(config.h)
 
 dnl ***************************************************************************
 dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CXX
-AM_PROG_CC_STDC
+AC_PROG_CC
 AC_PROG_MAKE_SET
 PKG_PROG_PKG_CONFIG
 AC_PATH_PROG([RST2MAN], [rst2man])
